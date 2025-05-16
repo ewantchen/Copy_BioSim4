@@ -27,6 +27,7 @@ class BioSim(ParallelEnv):
         self.timestep = None
         self.size = size
         self.survivors = []
+        self.dead_agents = []
 
     def reset(self, seed=None, options=None):
         #on prend les agents de la liste
@@ -171,9 +172,19 @@ class BioSim(ParallelEnv):
         self.timestep += 1 
 
         for agents in self.agents :
-            if termination[agents] == True and truncations[agents]== True :
-                  if rewards[agents] == 1 :
-                       self.survivors.append(agents)
+             if rewards[agents] == 0 :
+                  termination[agents] = True
+                  truncations[agents] = True
+                  self.dead_agents.append(agents)
+             elif rewards[agents] == 1 :
+                  self.survivors.append(agents)
+        for dead in self.dead_agents :
+             self.agents.remove(dead)
+             del self.agent_position[dead]
+             del self.agent_genome[dead]
+             del self.agent_brains[dead]
+            
+
                        
         observations = {
             agents : self._get_observation(agents)
