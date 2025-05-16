@@ -68,26 +68,33 @@ class BioSim(ParallelEnv):
 
         #propagation avant
         for agents in self.agents :
-            #calcul des valeurs des capteurs
-            sensor_values = NeuralNet._get_sensor_values(agents)
             
-            #propagation dans le réseau
-            NeuralNet.get_sensors_input(sensor_values,agents)  # Transmet les entrées
-            NeuralNet.feed_forward()
-            action_outputs = NeuralNet.get_action_outputs(self.agent_brains[agents])
+            #on prend l'agent et son cerveau
+            brain = self.agent_brains[agents]
+
+            #on prend les valeurs des capteurs
+            #on les met dans le réseau
+            sensor_values = brain._get_sensor_values(self.agent_position[agents], self.size)
+            brain.get_sensors_input(sensor_values)
+            #on fait la propagation avant
+            brain.feed_forward()
+            action_outputs = brain.get_action_outputs()
 
             if action_outputs :
                 best_action_index = max(action_outputs, key = action_outputs.get)
                 action_name = ACTIONS[best_action_index]
 
+# Transmet les entrées
+ #propagation dans le réseau
+            #calcul des valeurs des capteurs
 
 
         #le max et le min permet d'avoir des bordures en comparant 0 et position
         # Le 0, 0 commence en haut à gauche, donc y doit être rapproché de 0 pour monter.
-        if action_name == "UP":
+        if action_name == "NORTH":
             self.agent_position[agents][1] = max(0, self.agent_position[agents][1] - 1)
 
-        elif action_name == "DOWN":
+        elif action_name == "SOUTH":
             self.agent_position[agents][1] = min(self.size - 1, self.agent_position[agents][1] + 1)
 
         elif action_name == "WEST":
@@ -137,7 +144,7 @@ class BioSim(ParallelEnv):
         observation = {
         'position': [x, y],
         'sensors': sensor_values,
-        'neurons': [Neuron.output for neuron in self.agent_brains[agent].neurons]
+        'neurons': [neuron.output for neuron in self.agent_brains[agent].neurons]
     }
         return observation
 
