@@ -26,6 +26,7 @@ class BioSim(ParallelEnv):
 
         self.timestep = None
         self.size = size
+        self.survivors = []
 
     def reset(self, seed=None, options=None):
         #on prend les agents de la liste
@@ -57,13 +58,53 @@ class BioSim(ParallelEnv):
         }
         return observations
     
+    
+    def selection(self, agents) :
+         
+         new_population = []
+         new_genome = {}
+         #prendre les agents qui on survécu
+         for agents in self.agents :
+              if agents in self.survivors :
+                   #on selection les parents
+                   parent = random.choice(self.survivors)
+                   parent_genome = self.agent_genome[parent]
+                   
+                   #on prend le genome des parents
+                   half_genome = len(parent_genome) // 2
+                   child_genome = parent_genome[:half_genome]
 
+                    #création du génome des enfants
+                   child_genome = Gene.apply_point_mutations(child_genome)
+                   child_genome = Gene.random_insert_deletion(child_genome)
+                   
+                   new_agent_name = f"agent_{len(new_population)}"
+                   new_population.append(new_agent_name)
+                   new_genome[new_agent_name] = child_genome
+
+        # on redifini les agents
+         self.agents = new_population
+         self.agent_genome = new_genome
+         self.agent_brains = {
+            agent: NeuralNet.create_wiring_from_genome(self.agent_genome[agent])
+            for agent in self.agents
+            }
+
+        #on recrée la position de la nouvelle popoulation
+         self.agent_position = {
+                agent: np.array([
+                    random.randint(0, self.size - 1),
+                    random.randint(0, self.size - 1)
+                    ])
+                for agent in self.agents
+                    }         
+                   
     
 
     def step(self, actions):
         rewards = {agents : 0 for agents in self.agents}
         termination = {agent: False for agent in self.agents}
-        truncationns = {agents : False for agents in self.agents}
+        truncations = {agents : False for agents in self.agents}
         infos = {agents : {} for agents in self.agents}
 
         #propagation avant
@@ -84,8 +125,8 @@ class BioSim(ParallelEnv):
                 best_action_index = max(action_outputs, key = action_outputs.get)
                 action_name = ACTIONS[best_action_index]
 
-# Transmet les entrées
- #propagation dans le réseau
+        # Transmet les entrées
+        #propagation dans le réseau
             #calcul des valeurs des capteurs
 
 
@@ -128,11 +169,17 @@ class BioSim(ParallelEnv):
 
 
         self.timestep += 1 
+
+        for agents in self.agents :
+            if termination[agents] == True and truncations[agents]== True :
+                  if rewards[agents] == 1 :
+                       self.survivors.append(agents)
+                       
         observations = {
             agents : self._get_observation(agents)
             for agents in self.agents
         }
-        return observations, rewards, termination, truncationns, infos
+        return observations, rewards, termination, truncations, infos
     
     def _get_observation(self, agent):
         """Retourne l'observation de l'agent"""
