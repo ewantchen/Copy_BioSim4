@@ -77,7 +77,9 @@ class BioSim(ParallelEnv):
          #prendre les agents qui on survécu
          for agents in self.agents :
               if agents in self.survivors :
-                   #on selection les parents
+                   #on selection les parents au hasard.
+                   #Peut être changé dans le futur pour correspondre
+                   #à la géographie
                    parent = random.choice(self.survivors)
                    parent_genome = self.agent_genome[parent]
                    
@@ -183,9 +185,6 @@ class BioSim(ParallelEnv):
 
         elif action_name == "EAST":
             self.agent_position[agents][0] = min(self.size - 1, self.agent_position[agents][0] + 1)
-
-        elif action_name == "NORTH WEST" :
-            self.agent_position[agents][0,1]
 
         elif action_name == "NORTH WEST":
             self.agent_position[agents][0] = max(0, self.agent_position[agents][0] - 1)  # Déplace l'agent vers la gauche
