@@ -17,7 +17,7 @@ class BioSim(ParallelEnv):
         "name": "BioSim",
     }
 
-    def __init__(self, size = 128, n_agents = 10):
+    def __init__(self, size = 128, n_agents = 10, max_time = 100):
         self.n_agents = n_agents
         
         
@@ -25,6 +25,7 @@ class BioSim(ParallelEnv):
         self.agent_genome = None
 
         self.timestep = None
+        self.max_time = max_time
         self.size = size
         self.survivors = []
         self.dead_agents = []
@@ -59,6 +60,15 @@ class BioSim(ParallelEnv):
         }
         return observations
     
+    def condition(self):
+         #on décrit une condition de séléction selon les besoins. Sera ensuite appelé à la fin 
+         # de la simulation
+         for agents in self.agents :
+              x, y = self.agent_position[agents]
+              if self.timestep >= self.max_time and x > self.size // 2:
+                   self.rewards[agents] = 0
+
+                   
     
     def selection(self, agents) :
          
@@ -103,7 +113,7 @@ class BioSim(ParallelEnv):
     
 
     def step(self, actions):
-        rewards = {agents : 0 for agents in self.agents}
+        self.rewards = {agents : 0 for agents in self.agents}
         termination = {agent: False for agent in self.agents}
         truncations = {agents : False for agents in self.agents}
         infos = {agents : {} for agents in self.agents}
