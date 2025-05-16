@@ -109,13 +109,42 @@ class BioSim(ParallelEnv):
                     ])
                 for agent in self.agents
                     }         
-                   
-    
+
+    #fonction à appeller lors de la fin d'une simulation, et préparation de la prochaine               
+    def end_of_sim(self) :
+
+        self.condition()
+
+        for agents in self.agents :
+             if self.rewards[agents] == 0 :
+                  self.termination[agents] = True
+                  self.truncations[agents] = True
+                  self.dead_agents.append(agents)
+             elif self.rewards[agents] == 1 :
+                  self.survivors.append(agents)
+        for dead in self.dead_agents :
+             self.agents.remove(dead)
+             del self.agent_position[dead]
+             del self.agent_genome[dead]
+             del self.agent_brains[dead]
+        self.dead_agents.clear()
+        self.selection()
+
+        self.timestep = 0
+        observations = {
+            agents : self._get_observation(agents)
+            for agents in self.agents
+        }
+        return observations
+        
+
+             
+         
 
     def step(self, actions):
         self.rewards = {agents : 0 for agents in self.agents}
-        termination = {agent: False for agent in self.agents}
-        truncations = {agents : False for agents in self.agents}
+        self.termination = {agent: False for agent in self.agents}
+        self.truncations = {agents : False for agents in self.agents}
         infos = {agents : {} for agents in self.agents}
 
         #propagation avant
@@ -177,30 +206,13 @@ class BioSim(ParallelEnv):
                 self.agent_position[agents][0] = min(self.size - 1, self.agent_position[agents][0] + 1)  # Déplace l'agent vers la droite
                 self.agent_position[agents][1] = min(self.size - 1, self.agent_position[agents][1] + 1)  # Déplace l'agent vers le bas
 
-
-
         self.timestep += 1 
-
-        for agents in self.agents :
-             if rewards[agents] == 0 :
-                  termination[agents] = True
-                  truncations[agents] = True
-                  self.dead_agents.append(agents)
-             elif rewards[agents] == 1 :
-                  self.survivors.append(agents)
-        for dead in self.dead_agents :
-             self.agents.remove(dead)
-             del self.agent_position[dead]
-             del self.agent_genome[dead]
-             del self.agent_brains[dead]
-            
-
-                       
+        
         observations = {
             agents : self._get_observation(agents)
             for agents in self.agents
         }
-        return observations, rewards, termination, truncations, infos
+        return observations, self.rewards, self.termination, self.truncations, infos
     
     def _get_observation(self, agent):
         """Retourne l'observation de l'agent"""
