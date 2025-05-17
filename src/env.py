@@ -10,6 +10,8 @@ from gymnasium.spaces import Discrete, MultiDiscrete
 from pettingzoo import ParallelEnv
 import random
 import numpy as np
+import pygame
+from typing import Optional
 
 
 class BioSim(ParallelEnv):
@@ -239,3 +241,130 @@ class BioSim(ParallelEnv):
     @functools.lru_cache(maxsize=None)
     def action_space(self, agent):
         return Discrete(len(ACTIONS))
+
+    def render(self, mode: str = 'human') -> Optional[np.ndarray]:
+        """
+        Affiche la simulation avec Pygame.
+        - Les agents sont des cercles colorés selon leur génome
+        - Fond de grille discret
+        
+        Args:
+            mode: 'human' (affichage) ou 'rgb_array' (retourne image)
+        Returns:
+            Array numpy si mode='rgb_array', sinon None
+        """
+        if not hasattr(self, '_render_initialized'):
+            self._init_render()
+
+        # Création surface
+        surface = pygame.Surface((self.screen_size, self.screen_size))
+        surface.fill(self.colors['background'])
+        
+        # Dessin de la grille
+        self._draw_grid(surface)
+        
+        # Dessin des agents (billes colorées)
+        self._draw_agents_as_spheres(surface)
+        
+        # Infos texte
+        self._draw_simulation_info(surface)
+        
+        if mode == 'human':
+            pygame.event.pump()
+            self.screen.blit(surface, (0, 0))
+            pygame.display.flip()
+        elif mode == 'rgb_array':
+            return np.transpose(
+                np.array(pygame.surfarray.pixels3d(surface)), 
+                axes=(1, 0, 2))
+        return None
+
+    def _init_render(self):
+        """Initialise Pygame et les paramètres visuels"""
+        pygame.init()
+        self.cell_size = 20  # Taille d'une cellule en pixels
+        self.screen_size = self.size * self.cell_size
+        self.screen = pygame.display.set_mode((self.screen_size, self.screen_size))
+        pygame.display.set_caption("BioSim - Visualisation Évolutive")
+        
+        # Configuration des couleurs
+        self.colors = {
+            'background': (255, 255, 255),  # Blanc
+            'grid': (230, 230, 230),        # Gris très clair
+            'text': (0, 0, 0)               # Noir
+        }
+        
+        self.font = pygame.font.SysFont('Arial', 14)
+        self._render_initialized = True
+
+    def _draw_grid(self, surface):
+        """Dessine la grille de fond"""
+        for x in range(0, self.screen_size, self.cell_size):
+            pygame.draw.line(
+                surface, self.colors['grid'], 
+                (x, 0), (x, self.screen_size), 1)
+        for y in range(0, self.screen_size, self.cell_size):
+            pygame.draw.line(
+                surface, self.colors['grid'], 
+                (0, y), (self.screen_size, y), 1)
+
+    def _draw_agents_as_spheres(self, surface):
+        """Dessine les agents comme des cercles colorés selon leur génome"""
+        for agent_id, pos in self.agent_position.items():
+            # Conversion du génome en couleur hex -> RGB
+            genome = self.agent_genome[agent_id]
+            color = self._genome_to_color(genome)
+            
+            # Position et taille de la bille
+            center = (
+                int(pos[0] * self.cell_size + self.cell_size / 2),
+                int(pos[1] * self.cell_size + self.cell_size / 2)
+            )
+            radius = int(self.cell_size * 0.4)  # 80% de la cellule
+            
+            # Dessin avec effet 3D simple
+            pygame.draw.circle(
+                surface, 
+                color, 
+                center, 
+                radius
+            )
+            # Bordure pour effet relief
+            pygame.draw.circle(
+                surface,
+                (min(255, color[0] + 30), 
+                (center[0] - 2, center[1] - 2), 
+                radius, 
+                2)
+            )
+
+    def _genome_to_color(self, genome: str) -> tuple:
+        """
+        Convertit un génome hexadécimal en couleur RGB.
+        Ex: "A3F" -> (163, 255, 63)
+        """
+        # Normalisation à 6 caractères (doublage si besoin)
+        hex_str = (genome * 6)[:6]
+        
+        try:
+            # Conversion hex -> RGB
+            return (
+                int(hex_str[0:2], 16) % 256,
+                int(hex_str[2:4], 16) % 256,
+                int(hex_str[4:6], 16) % 256
+            )
+        except:
+            return (100, 100, 100)  # Couleur par défaut si erreur
+
+    def _draw_simulation_info(self, surface):
+        """Affiche les informations textuelles"""
+        info = [
+            f"Génération: {self.generation}",
+            f"Agents: {len(self.agent_position)}",
+            f"Temps: {self.timestep}/{self.max_time}"
+        ]
+        
+        for i, text in enumerate(info):
+            text_surface = self.font.render(text, True, self.colors['text'])
+            surface.blit(text_surface, (10, 10 + i * 20))
+        
