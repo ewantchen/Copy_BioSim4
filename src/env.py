@@ -21,7 +21,9 @@ class BioSim(ParallelEnv):
         self.n_agents = n_agents
         
         
-        self.agent_position = None
+        self.agent_position = {}
+        self.position_occupancy = np.zeros((size,size), dtype=bool)
+
         self.agent_genome = None
 
         self.timestep = None
@@ -30,18 +32,29 @@ class BioSim(ParallelEnv):
         self.survivors = []
         self.dead_agents = []
 
+    def new_positions(self):
+        positions = set()
+        for agents in self.agents :
+             while True :
+                  x, y = np.array([
+                random.randint(0, self.size - 1),
+                random.randint(0, self.size - 1)
+                ])
+                  if not self.position_occupancy[x,y] :
+                       self.agent_position[agents] = np.array([x,y], dtype=np.int(32))
+                       self.position_occupancy[x,y] = True
+                       positions.add(np.array([x,y]))
+                       break
+        return self.agent_position
+         
+
     def reset(self, seed=None, options=None):
         #on prend les agents de la liste
         self.agents = [f"agent_{i}" for i in range(self.n_agents)]
         #on leur donne une position aléatoire 
         
-        self.agent_position = {
-            agent: np.array([
-                random.randint(0, self.size - 1),
-                random.randint(0, self.size - 1)
-                ])
-                    for agent in self.agents
-                }
+        self.agent_position = self.new_positions()
+
         self.agent_genome = {
             agents : Gene.make_random_genome()
             for agents in self.agents
@@ -49,7 +62,7 @@ class BioSim(ParallelEnv):
         self.agent_brains = {
             agent: NeuralNet.create_wiring_from_genome(self.agent_genome[agent])
             for agent in self.agents
-        }
+            }
 
 
         self.timestep = 0
@@ -104,13 +117,7 @@ class BioSim(ParallelEnv):
             }
 
         #on recrée la position de la nouvelle popoulation
-         self.agent_position = {
-                agent: np.array([
-                    random.randint(0, self.size - 1),
-                    random.randint(0, self.size - 1)
-                    ])
-                for agent in self.agents
-                    }         
+         self.agent_position = self.new_positions()
 
     #fonction à appeller lors de la fin d'une simulation, et préparation de la prochaine               
     def end_of_sim(self) :
@@ -167,44 +174,41 @@ class BioSim(ParallelEnv):
                 best_action_index = max(action_outputs, key = action_outputs.get)
                 action_name = ACTIONS[best_action_index]
 
-        # Transmet les entrées
-        #propagation dans le réseau
-            #calcul des valeurs des capteurs
 
+        current_x, current_y = self.agent_position[agents]
+        new_x, new_y = current_x, current_y
 
         #le max et le min permet d'avoir des bordures en comparant 0 et position
         # Le 0, 0 commence en haut à gauche, donc y doit être rapproché de 0 pour monter.
         if action_name == "NORTH":
-            self.agent_position[agents][1] = max(0, self.agent_position[agents][1] - 1)
-
+            new_y = max(0, current_y - 1)
         elif action_name == "SOUTH":
-            self.agent_position[agents][1] = min(self.size - 1, self.agent_position[agents][1] + 1)
-
+            new_y = min(self.size - 1, current_y + 1)
         elif action_name == "WEST":
-            self.agent_position[agents][0] = max(0, self.agent_position[agents][0] - 1)
-
+            new_x = max(0, current_x - 1)
         elif action_name == "EAST":
-            self.agent_position[agents][0] = min(self.size - 1, self.agent_position[agents][0] + 1)
-
+            new_x = min(self.size - 1, current_x + 1)
         elif action_name == "NORTH WEST":
-            self.agent_position[agents][0] = max(0, self.agent_position[agents][0] - 1)  # Déplace l'agent vers la gauche
-            self.agent_position[agents][1] = max(0, self.agent_position[agents][1] - 1)  # Déplace l'agent vers le haut
-
-            # North East : Déplacement vers le haut à droite
+            new_x = max(0, current_x - 1)
+            new_y = max(0, current_y - 1)
         elif action_name == "NORTH EAST":
-                self.agent_position[agents][0] = min(self.size - 1, self.agent_position[agents][0] + 1)  # Déplace l'agent vers la droite
-                self.agent_position[agents][1] = max(0, self.agent_position[agents][1] - 1)  # Déplace l'agent vers le haut
-
-            # South West : Déplacement vers le bas à gauche
+            new_x = min(self.size - 1, current_x + 1)
+            new_y = max(0, current_y - 1)
         elif action_name == "SOUTH WEST":
-                self.agent_position[agents][0] = max(0, self.agent_position[agents][0] - 1)  # Déplace l'agent vers la gauche
-                self.agent_position[agents][1] = min(self.size - 1, self.agent_position[agents][1] + 1)  # Déplace l'agent vers le bas
-
-            # South East : Déplacement vers le bas à droite
+            new_x = max(0, current_x - 1)
+            new_y = min(self.size - 1, current_y + 1)
         elif action_name == "SOUTH EAST":
-                self.agent_position[agents][0] = min(self.size - 1, self.agent_position[agents][0] + 1)  # Déplace l'agent vers la droite
-                self.agent_position[agents][1] = min(self.size - 1, self.agent_position[agents][1] + 1)  # Déplace l'agent vers le bas
+            new_x = min(self.size - 1, current_x + 1)
+            new_y = min(self.size - 1, current_y + 1)
+        # Déplace l'agent vers le bas
 
+        if (new_x, new_y) != (current_x, current_y):
+            if not self.position_occupancy[new_x, new_y] :
+                self.position_occupancy[current_x, current_y] = False
+                self.position_occupancy[new_x, new_y] = True
+                self.agent_position[agents] = [new_x, new_y]
+        
+        
         self.timestep += 1 
         
         observations = {
@@ -223,7 +227,7 @@ class BioSim(ParallelEnv):
         observation = {
         'position': [x, y],
         'sensors': sensor_values,
-        'neurons': [neuron.output for neuron in self.agent_brains[agent].neurons]
+        'neurons': [Neuron.output for neuron in self.agent_brains[agent].neurons]
     }
         return observation
 
