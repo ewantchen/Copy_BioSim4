@@ -180,52 +180,52 @@ class NeuralNet :
                 neuron.output = np.tanh(neuron.input)  # Fonction d'activation
                 neuron.input = 0.0  # Réinitialise pour le prochain cycle
     
+    @classmethod
+    def create_wiring_from_genome(cls, genome: List[Gene], max_neurons=1000) -> "NeuralNet" :
+            """convertit le génome en réseau neuronal"""
+            # étape 1 : filtrer les neurones inutiles
+            used_neurons = set()
+            for gene in genome : 
+                if gene.sinkType == 0 : 
+                    used_neurons.add(gene.sinkNum)
+                if gene.sourceType == 0 :
+                    used_neurons.add(gene.sourceNum)
 
-def create_wiring_from_genome(genome: List[Gene], max_neurons=1000) -> "NeuralNet" :
-        """convertit le génome en réseau neuronal"""
-        # étape 1 : filtrer les neurones inutiles
-        used_neurons = set()
-        for gene in genome : 
-            if gene.sinkType == 0 : 
-                used_neurons.add(gene.sinkNum)
-            if gene.sourceType == 0 :
-                used_neurons.add(gene.sourceNum)
 
+            # Étape 2: Renumérotation (ex: [5, 10, 15] → [0, 1, 2])
+            neuron_remap = {old: new for new, old in enumerate(sorted(used_neurons))}
 
-        # Étape 2: Renumérotation (ex: [5, 10, 15] → [0, 1, 2])
-        neuron_remap = {old: new for new, old in enumerate(sorted(used_neurons))}
+            #Étape 3 : Construire le réseau 
+            net = NeuralNet()
+            net.neurons = [Neuron() for _ in range(len(used_neurons))]
+            
+            for gene in genome : 
+                #Ignorer les connexions vers les neurones supprimés 
+                if gene.sinkType == 0 and gene.sinkNum not in neuron_remap :
+                    continue
+                
+                new_gene = Gene()
+                
+                new_gene.sourceType = gene.sourceType
+                new_gene.sinkType = gene.sinkType
+                new_gene.weight = gene.weight
 
-        #Étape 3 : Construire le réseau 
-        net = NeuralNet()
-        net.neurons = [Neuron() for _ in range(len(used_neurons))]
+                if gene.sourceType == 0 : 
+                    new_gene.sourceNum = neuron_remap[gene.sourceNum]
+                else : 
+                    new_gene.sourceNum = gene.sourceNum
+
+                if gene.sinkType == 0 :
+                    new_gene.sinkNum = neuron_remap[gene.sinkNum]
+                else : 
+                    new_gene.sinkNum = gene.sinkNum
+                
+                net.connections.append(new_gene)
+
+            return net
         
-        for gene in genome : 
-            #Ignorer les connexions vers les neurones supprimés 
-            if gene.sinkType == 0 and gene.sinkNum not in neuron_remap :
-                continue
-            
-            new_gene = Gene()
-            
-            new_gene.sourceType = gene.sourceType
-            new_gene.sinkType = gene.sinkType
-            new_gene.weight = gene.weight
 
-            if gene.sourceType == 0 : 
-                new_gene.sourceNum = neuron_remap[gene.sourceNum]
-            else : 
-                new_gene.sourceNum = gene.sourceNum
-
-            if gene.sinkType == 0 :
-                new_gene.sinkNum = neuron_remap[gene.sinkNum]
-            else : 
-                new_gene.sinkNum = gene.sinkNum
-            
-            net.connections.append(new_gene)
-
-        return net
-    
-
-    
+        
 
 
 
