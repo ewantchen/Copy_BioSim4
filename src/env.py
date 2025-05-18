@@ -11,13 +11,18 @@ from pettingzoo import ParallelEnv
 import random
 import numpy as np
 
+import pygame
+import hashlib
 
 class BioSim(ParallelEnv):
     metadata = {
         "name": "BioSim",
+        "render_modes" : ["human", "rgb_array"], 
+        "render_fps" : 60
     }
 
-    def __init__(self, size = 128, n_agents = 10, max_time = 100):
+    def __init__(self, size = 128, n_agents = 10, max_time = 100, render_mode=None):
+        super().__init__()
         self.n_agents = n_agents
         
         
@@ -28,6 +33,12 @@ class BioSim(ParallelEnv):
 
         self.timestep = None
         self.max_time = max_time
+
+        self.render_mode = render_mode
+        self.window = None
+        self.window_size = 512
+        self.clock = None
+
         self.size = size
         self.survivors = []
         self.dead_agents = []
@@ -43,7 +54,7 @@ class BioSim(ParallelEnv):
                   if not self.position_occupancy[x,y] :
                        self.agent_position[agents] = np.array([x,y], dtype=np.int(32))
                        self.position_occupancy[x,y] = True
-                       positions.add(np.array([x,y]))
+                       positions.add(x,y)
                        break
         return self.agent_position
          
@@ -64,6 +75,10 @@ class BioSim(ParallelEnv):
             for agent in self.agents
             }
 
+        self.agent_colors = self.get_all_colors()        
+
+        if self.render_mode == "human" :
+            self._render_frame()
 
         self.timestep = 0
         #pas besoin des observations au début
@@ -80,6 +95,8 @@ class BioSim(ParallelEnv):
               x, y = self.agent_position[agents]
               if self.timestep >= self.max_time and x > self.size // 2:
                    self.rewards[agents] = 0
+              else : 
+                  self.rewards[agents] = 1
 
                    
     
@@ -115,6 +132,7 @@ class BioSim(ParallelEnv):
             agent: NeuralNet.create_wiring_from_genome(self.agent_genome[agent])
             for agent in self.agents
             }
+         self.agent_colors = self.get_all_colors() 
 
         #on recrée la position de la nouvelle popoulation
          self.agent_position = self.new_positions()
@@ -145,9 +163,7 @@ class BioSim(ParallelEnv):
             for agents in self.agents
         }
         return observations
-        
 
-             
          
 
     def step(self, actions):
@@ -155,6 +171,10 @@ class BioSim(ParallelEnv):
         self.termination = {agent: False for agent in self.agents}
         self.truncations = {agents : False for agents in self.agents}
         infos = {agents : {} for agents in self.agents}
+
+        if self.render_mode == "human" :
+            self._render_frame()
+
 
         #propagation avant
         for agents in self.agents :
@@ -239,3 +259,117 @@ class BioSim(ParallelEnv):
     @functools.lru_cache(maxsize=None)
     def action_space(self, agent):
         return Discrete(len(ACTIONS))
+    
+    def get_all_colors(self):
+        self.agent_colors = {}
+        for agents in self.agents :
+            genome = self.agent_genome[agents]
+            c = self.make_genetic_color_value(genome)
+            self.agent_colors[agents] = self.genetic_color_to_rgb(c)
+        return self.agent_colors
+    
+    #on transforme la valeur génétique en couleur
+    def make_genetic_color_value(self, genome):
+        if not genome:
+            return 0
+
+        value = (
+            (len(genome) & 1)
+            | ((genome[0].sourceType & 1) << 1)
+            | ((genome[-1].sourceType & 1) << 2)
+            | ((genome[0].sinkType & 1) << 3)
+            | ((genome[-1].sinkType & 1) << 4)
+            | ((genome[0].sourceNum & 1) << 5)
+            | ((genome[0].sinkNum & 1) << 6)
+            | ((genome[-1].sourceNum & 1) << 7)
+    )
+        return value
+    
+    #on transforme les valeurs de couleur en couleur rgb
+    def genetic_color_to_rgb(self, c, max_color_val=0xb0, max_luma_val=0xb0):
+        r = c
+        g = (c & 0x1F) << 3
+        b = (c & 0x07) << 5
+
+        # Calculer la luminance (même formule que dans le C++)
+        luma = (r + r + r + b + g + g + g + g) // 8
+
+        # Réduire les valeurs si elles sont trop claires
+        if luma > max_luma_val:
+            if r > max_color_val:
+                r %= max_color_val
+            if g > max_color_val:
+                g %= max_color_val
+            if b > max_color_val:
+                b %= max_color_val
+
+        return (r, g, b)
+
+    def render(self) : 
+        if self.render_mode == "rgb_array":
+            return self._render_frame()
+    
+    def _render_frame(self) : 
+        if self.render_mode == "human" and self.window is None :
+            pygame.init()
+            pygame.display.init()
+            self.window = pygame.display.set_mode(
+                (self.window_size, self.window_size)
+                )
+        if self.clock is None and self.render_mode == "human" :
+            self.clock = pygame.time.Clock()
+        
+        canvas = pygame.Surface((self.window_size, self.window_size))
+        canvas.fill((255,255,255))
+        pix_square_size = (
+            self.window_size / self.size
+        ) #taile d'une case en pixels
+
+        for agents in self.agents :
+            genome = self.agent_genome[agents]
+            c = self.make_genetic_color_value(genome)
+            color = self.genetic_color_to_rgb(c)
+            pygame.draw.circle(
+                canvas,
+                color,
+                #le + 0.5 permet de centrer le cercle
+                (self.agent_position[agents] + 0.5) * pix_square_size,
+                #rayon du cercle
+                 pix_square_size / 3,
+            )
+
+           #on dessine les lignes de la grille 
+        for x in range(self.size + 1) :
+         pygame.draw.line(
+            canvas,
+            0,
+            (0, pix_square_size * x),
+            (self.window_size, pix_square_size * x),
+            width=3,
+            )
+         pygame.draw.line(
+            canvas,
+            0,
+            (pix_square_size * x, 0),
+            (pix_square_size * x, self.window_size),
+            width=3,
+        )
+        if self.render_mode == "human":
+        # The following line copies our drawings from `canvas` to the visible window
+            self.window.blit(canvas, canvas.get_rect())
+            pygame.event.pump()
+            pygame.display.update()
+
+            # We need to ensure that human-rendering occurs at the predefined framerate.
+            # The following line will automatically add a delay to keep the framerate stable.
+            self.clock.tick(self.metadata["render_fps"])
+
+        else:  # rgb_array
+            return np.transpose(
+            np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
+        )
+    
+    def close(self) :
+        if self.window is not None :
+            pygame.display.quit()
+            pygame.quit()
