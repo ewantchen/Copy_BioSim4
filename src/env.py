@@ -39,6 +39,12 @@ class BioSim(ParallelEnv):
         self.window_size = 512
         self.clock = None
 
+        if render_mode == "human":
+            pygame.init()
+            pygame.display.init()
+            self.window = pygame.display.set_mode((self.window_size, self.window_size))
+            self.clock = pygame.time.Clock()
+
         self.size = size
         self.survivors = []
         self.dead_agents = []
@@ -75,7 +81,7 @@ class BioSim(ParallelEnv):
             for agent in self.agents
             }
 
-        self.agent_colors = self.get_all_colors()        
+        self.agent_colors = self.get_all_colors()       
 
         if self.render_mode == "human" :
             self._render_frame()
@@ -100,42 +106,47 @@ class BioSim(ParallelEnv):
 
                    
     
-    def selection(self, agents) :
-         
-         new_population = []
-         new_genome = {}
-         #prendre les agents qui on survécu
-         for agents in self.agents :
-              if agents in self.survivors :
-                   #on selection les parents au hasard.
-                   #Peut être changé dans le futur pour correspondre
-                   #à la géographie
-                   parent = random.choice(self.survivors)
-                   parent_genome = self.agent_genome[parent]
+    def selection(self) :
+        if not self.survivors : 
+            print("aucun n'a survécu")
+        self.survivors = [agent for agent in self.survivors
+                            if agent in self.agent_genome]
+        new_population = []
+        new_genome = {}
+        #prendre les agents qui on survécu
+        for agents in self.agents :
+            if agents in self.survivors :
+                #on selection les parents au hasard.
+                #Peut être changé dans le futur pour correspondre
+                #à la géographie
+                    parent = random.choice(self.survivors)
+                    parent_genome = self.agent_genome[parent]
                    
-                   #on prend le genome des parents
-                   half_genome = len(parent_genome) // 2
-                   child_genome = parent_genome[:half_genome]
+                    #on prend le genome des parents
+                    half_genome = len(parent_genome) // 2
+                    child_genome = parent_genome[:half_genome]
 
                     #création du génome des enfants
-                   child_genome = Gene.apply_point_mutations(child_genome)
-                   child_genome = Gene.random_insert_deletion(child_genome)
+                    child_genome = Gene.apply_point_mutations(child_genome)
+                    child_genome = Gene.random_insert_deletion(child_genome)
                    
-                   new_agent_name = f"agent_{len(new_population)}"
-                   new_population.append(new_agent_name)
-                   new_genome[new_agent_name] = child_genome
+                    new_agent_name = f"agent_{len(new_population)}"
+                    new_population.append(new_agent_name)
+                    new_genome[new_agent_name] = child_genome
+            
 
         # on redifini les agents
-         self.agents = new_population
-         self.agent_genome = new_genome
-         self.agent_brains = {
+         
+        self.agents = new_population
+        self.agent_genome = new_genome
+        self.agent_brains = {
             agent: NeuralNet.create_wiring_from_genome(self.agent_genome[agent])
             for agent in self.agents
             }
-         self.agent_colors = self.get_all_colors() 
+        self.agent_colors = self.get_all_colors() 
 
         #on recrée la position de la nouvelle popoulation
-         self.agent_position = self.new_positions()
+        self.agent_position = self.new_positions()
 
     #fonction à appeller lors de la fin d'une simulation, et préparation de la prochaine               
     def end_of_sim(self) :
@@ -172,8 +183,7 @@ class BioSim(ParallelEnv):
         self.truncations = {agents : False for agents in self.agents}
         infos = {agents : {} for agents in self.agents}
 
-        if self.render_mode == "human" :
-            self._render_frame()
+
 
 
         #propagation avant
@@ -190,47 +200,53 @@ class BioSim(ParallelEnv):
             brain.get_sensors_input(sensor_values)
             #on fait la propagation avant
             brain.feed_forward()
-            action_outputs = brain.get_action_outputs()
+            action_outputs = brain.get_action_outputs(sensor_values)
+
+            #action par défaut
+            action_name = "STAY"
 
             if action_outputs :
                 best_action_index = max(action_outputs, key = action_outputs.get)
                 action_name = ACTIONS[best_action_index]
 
 
-        current_x, current_y = self.agent_position[agents]
-        new_x, new_y = current_x, current_y
+            current_x, current_y = self.agent_position[agents]
+            new_x, new_y = current_x, current_y
 
-        #le max et le min permet d'avoir des bordures en comparant 0 et position
-        # Le 0, 0 commence en haut à gauche, donc y doit être rapproché de 0 pour monter.
-        if action_name == "NORTH":
-            new_y = max(0, current_y - 1)
-        elif action_name == "SOUTH":
-            new_y = min(self.size - 1, current_y + 1)
-        elif action_name == "WEST":
-            new_x = max(0, current_x - 1)
-        elif action_name == "EAST":
-            new_x = min(self.size - 1, current_x + 1)
-        elif action_name == "NORTH WEST":
-            new_x = max(0, current_x - 1)
-            new_y = max(0, current_y - 1)
-        elif action_name == "NORTH EAST":
-            new_x = min(self.size - 1, current_x + 1)
-            new_y = max(0, current_y - 1)
-        elif action_name == "SOUTH WEST":
-            new_x = max(0, current_x - 1)
-            new_y = min(self.size - 1, current_y + 1)
-        elif action_name == "SOUTH EAST":
-            new_x = min(self.size - 1, current_x + 1)
-            new_y = min(self.size - 1, current_y + 1)
-        # Déplace l'agent vers le bas
+            #le max et le min permet d'avoir des bordures en comparant 0 et position
+            # Le 0, 0 commence en haut à gauche, donc y doit être rapproché de 0 pour monter.
+            if action_name == "NORTH":
+                new_y = max(0, current_y - 1)
+            elif action_name == "SOUTH":
+                new_y = min(self.size - 1, current_y + 1)
+            elif action_name == "WEST":
+                new_x = max(0, current_x - 1)
+            elif action_name == "EAST":
+                new_x = min(self.size - 1, current_x + 1)
+            elif action_name == "NORTH WEST":
+                new_x = max(0, current_x - 1)
+                new_y = max(0, current_y - 1)
+            elif action_name == "NORTH EAST":
+                new_x = min(self.size - 1, current_x + 1)
+                new_y = max(0, current_y - 1)
+            elif action_name == "SOUTH WEST":
+                new_x = max(0, current_x - 1)
+                new_y = min(self.size - 1, current_y + 1)
+            elif action_name == "SOUTH EAST":
+                new_x = min(self.size - 1, current_x + 1)
+                new_y = min(self.size - 1, current_y + 1)
+            # Déplace l'agent vers le bas
 
-        if (new_x, new_y) != (current_x, current_y):
-            if not self.position_occupancy[new_x, new_y] :
-                self.position_occupancy[current_x, current_y] = False
-                self.position_occupancy[new_x, new_y] = True
-                self.agent_position[agents] = [new_x, new_y]
-        
-        
+            if (new_x, new_y) != (current_x, current_y):
+                if not self.position_occupancy[new_x, new_y] :
+                    self.position_occupancy[current_x, current_y] = False
+                    self.position_occupancy[new_x, new_y] = True
+                    self.agent_position[agents] = [new_x, new_y]
+
+
+            if self.render_mode == "human" :
+                self._render_frame()
+            
         self.timestep += 1 
         
         observations = {
@@ -312,7 +328,7 @@ class BioSim(ParallelEnv):
             return self._render_frame()
     
     def _render_frame(self) : 
-        if self.render_mode == "human" and self.window is None :
+        if self.render_mode == "human" :
             pygame.init()
             pygame.display.init()
             self.window = pygame.display.set_mode(
@@ -325,7 +341,7 @@ class BioSim(ParallelEnv):
         canvas.fill((255,255,255))
         pix_square_size = (
             self.window_size / self.size
-        ) #taile d'une case en pixels
+        ) #taille d'une case en pixels
 
         for agents in self.agents :
             genome = self.agent_genome[agents]
@@ -335,7 +351,7 @@ class BioSim(ParallelEnv):
                 canvas,
                 color,
                 #le + 0.5 permet de centrer le cercle
-                (self.agent_position[agents] + 0.5) * pix_square_size,
+                (np.array(self.agent_position[agents]) + 0.5) * pix_square_size,
                 #rayon du cercle
                  pix_square_size / 3,
             )
@@ -375,3 +391,5 @@ class BioSim(ParallelEnv):
         if self.window is not None :
             pygame.display.quit()
             pygame.quit()
+            self.window = None
+        self.clock = None

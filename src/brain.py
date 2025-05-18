@@ -11,7 +11,8 @@ ACTIONS = [
     "NORTH WEST",
     "NORTH EAST",
     "SOUTH WEST",
-    "SOUTH EAST"
+    "SOUTH EAST",
+    "STAY"
 ]
 
 n_ACTIONS = len(ACTIONS)
@@ -88,7 +89,7 @@ class Gene :
         elif chance < 0.6 :
             gene.sourceNum ^= (1 << np.random.randint(0,15)) 
         elif chance < 0.8 : 
-            gene.sinkNum ^= (1 << random.randint(0,15))
+            gene.sinkNum ^= (1 << random.randint(0,n_ACTIONS))
         else :
             gene.weight ^= (1 << np.random.randint(0,15))
         return gene
@@ -126,12 +127,15 @@ class NeuralNet :
 
     def get_action_outputs(self, sensor_values : Dict[int, float]) -> Dict[int, float] :
         #Retourne les activations des neurones d'action
-        action_outputs = {}
+        action_outputs = {i : 0.0 for i in range(n_ACTIONS)}
         for gene in self.connections : 
             #Si ça renvoie vers une action
             if gene.sinkType == 1 :
                 output_value = 0.0
 
+            if gene.sinkNum >= n_ACTIONS : 
+                continue 
+            
                 #si ça vient d'un sensor
                 if gene.sourceType == 1 :
                     if gene.sourceNum in sensor_values :
