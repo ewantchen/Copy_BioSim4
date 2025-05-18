@@ -21,7 +21,7 @@ class BioSim(ParallelEnv):
         "render_fps" : 60
     }
 
-    def __init__(self, size = 128, n_agents = 10, max_time = 100, render_mode=None):
+    def __init__(self, size = 128, n_agents = 100, max_time = 100, render_mode=None):
         super().__init__()
         self.n_agents = n_agents
         
@@ -52,9 +52,9 @@ class BioSim(ParallelEnv):
                 random.randint(0, self.size - 1)
                 ])
                   if not self.position_occupancy[x,y] :
-                       self.agent_position[agents] = np.array([x,y], dtype=np.int(32))
+                       self.agent_position[agents] = np.array([x,y], dtype=np.int32)
                        self.position_occupancy[x,y] = True
-                       positions.add(x,y)
+                       positions.add((x,y))
                        break
         return self.agent_position
          
@@ -181,6 +181,8 @@ class BioSim(ParallelEnv):
             
             #on prend l'agent et son cerveau
             brain = self.agent_brains[agents]
+            if not hasattr(brain, 'neurons') or not brain.neurons:
+                continue  # Passe à l'agent suivant si le cerveau est invalide
 
             #on prend les valeurs des capteurs
             #on les met dans le réseau
@@ -247,7 +249,7 @@ class BioSim(ParallelEnv):
         observation = {
         'position': [x, y],
         'sensors': sensor_values,
-        'neurons': [Neuron.output for neuron in self.agent_brains[agent].neurons]
+        'neurons': [neuron.output for neuron in self.agent_brains[agent].neurons]
     }
         return observation
 

@@ -124,27 +124,27 @@ class NeuralNet :
         self.neurons : List[Neuron] = []
     
 
-    def get_action_outputs(self) -> Dict[int, float] :
+    def get_action_outputs(self, sensor_values : Dict[int, float]) -> Dict[int, float] :
         #Retourne les activations des neurones d'action
         action_outputs = {}
         for gene in self.connections : 
-            if gene.sinkType == 1 :#vers une action
+            #Si ça renvoie vers une action
+            if gene.sinkType == 1 :
                 output_value = 0.0
-                if gene.sourceType == 0 : 
-                    #si ça va vers une action, et viens d'un neurone (pas sensor), alors on calcule
-                    # l'output sur l'action
-                    output_value = self.neurons[gene.sourceNum].output * gene.weightAsFloat()
-                elif gene.sourceType == 1 :
-                    output_value = self.neurons[gene.sourceNum].output * gene.weightAsFloat()
-                else :
-                    output_value = 0.0
-            
-            if gene.sinkNum <= n_ACTIONS :
-                if gene.sinkNum in action_outputs :
-                    action_outputs[gene.sinkNum] += output_value
-                else :
-                    action_outputs[gene.sinkNum] = output_value
-        return action_outputs
+
+                #si ça vient d'un sensor
+                if gene.sourceType == 1 :
+                    if gene.sourceNum in sensor_values :
+                        output_value = sensor_values[gene.sourceNum] * gene.weightAsFloat()
+                
+                #si ça vient d'un Neurone
+                elif gene.sourceType == 0 :
+                    if gene.sourceNum < len(self.neurons) :
+                        output_value = self.neurons[gene.sourceNum].output * gene.weightAsFloat()
+                
+                action_outputs[gene.sinkNum] += output_value
+
+        return action_outputs    
     
     def _get_sensor_values(self, agent_position, world_size) -> Dict[int, float]:
         """Calcule toutes les valeurs des capteurs en utilisant le dictionnaire"""
@@ -198,6 +198,8 @@ class NeuralNet :
             #Étape 3 : Construire le réseau 
             net = NeuralNet()
             net.neurons = [Neuron() for _ in range(len(used_neurons))]
+
+
             
             for gene in genome : 
                 #Ignorer les connexions vers les neurones supprimés 
