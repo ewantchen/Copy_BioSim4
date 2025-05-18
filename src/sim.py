@@ -9,6 +9,7 @@ pygame.init()
 
 for generation in range(20) :
     print(f"Génération {generation+1}/20 - Agents : {len(env.agents)}")
+    pygame.display.set_mode((800, 600))
     for i in range(100) :
         observations, rewards, terminations, truncations, infos = env.step({})
         time.sleep(0.01)
