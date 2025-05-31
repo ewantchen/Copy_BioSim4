@@ -44,6 +44,10 @@ class BioSim(ParallelEnv):
             pygame.display.init()
             self.window = pygame.display.set_mode((self.window_size, self.window_size))
             self.clock = pygame.time.Clock()
+            pygame.display.set_mode(
+                (self.window_size, self.window_size),
+                pygame.RESIZABLE,  
+            )
 
         self.size = size
         self.survivors = []
@@ -367,10 +371,6 @@ class BioSim(ParallelEnv):
             width=3,
         )
         if self.render_mode == "human":
-            pygame.display.set_mode(
-                (self.window_size, self.window_size),
-                pygame.RESIZABLE,  
-            )
         # The following line copies our drawings from `canvas` to the visible window
             self.window.blit(canvas, canvas.get_rect())
             pygame.event.pump()
