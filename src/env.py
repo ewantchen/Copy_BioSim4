@@ -18,7 +18,7 @@ class BioSim(ParallelEnv):
     metadata = {
         "name": "BioSim",
         "render_modes" : ["human", "rgb_array"], 
-        "render_fps" : 60
+        "render_fps" : 4
     }
 
     def __init__(self, size = 128, n_agents = 100, max_time = 100, render_mode=None):
@@ -328,12 +328,6 @@ class BioSim(ParallelEnv):
             return self._render_frame()
     
     def _render_frame(self) : 
-        if self.render_mode == "human" :
-            pygame.init()
-            pygame.display.init()
-            self.window = pygame.display.set_mode(
-                (self.window_size, self.window_size)
-                )
         if self.clock is None and self.render_mode == "human" :
             self.clock = pygame.time.Clock()
         
