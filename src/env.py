@@ -350,14 +350,12 @@ class BioSim(ParallelEnv):
         # ce génome.
         # On dessine ensuite un cercle selon cette couleur et la position
         for agents in self.agents :
-
-            """genome = self.agent_genome[agents]
+            genome = self.agent_genome[agents]
             c = self.make_genetic_color_value(genome)
             color = self.genetic_color_to_rgb(c)
-            """
             pygame.draw.circle(
                 canvas,
-                """color,"""
+                0,
                 #le + 0.5 permet de centrer le cercle
                 (np.array(self.agent_position[agents]) + 0.5) * pix_square_size,
                 #rayon du cercle
@@ -385,9 +383,11 @@ class BioSim(ParallelEnv):
             width=1,
         )
          
-         
+
         if self.render_mode == "human":
-        # The following line copies our drawings from `canvas` to the visible window
+        # Blit copie le contenu sur la fenêtre
+        # Pump gère les évènements internes
+        # Display.update affiche la fenêtre
             self.window.blit(canvas, canvas.get_rect())
             pygame.event.pump()
             pygame.display.update()
