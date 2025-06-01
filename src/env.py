@@ -282,32 +282,34 @@ class BioSim(ParallelEnv):
     def action_space(self, agent):
         return Discrete(len(ACTIONS))
     
-    def get_all_colors(self):
-        self.agent_colors = {}
-        for agents in self.agents :
-            genome = self.agent_genome[agents]
-            c = self.make_genetic_color_value(genome)
-            self.agent_colors[agents] = self.genetic_color_to_rgb(c)
-        return self.agent_colors
-    
-    #on transforme la valeur génétique en couleur
+
+    # on transforme la valeur génétique en couleur.
+    # Un gène possède 5 informations : sa source, sa cible et son poid
+    # ici, on prend le premier et le dernier gène et on transforme par 
+    # modulo ces informations en bits. Ensuite, ces bits sont transformés
+    # en couleur rgb. 
     def make_genetic_color_value(self, genome):
+        # on vérifie s'il y a un génome
         if not genome:
             return 0
 
         value = (
-            (len(genome) & 1)
-            | ((genome[0].sourceType & 1) << 1)
-            | ((genome[-1].sourceType & 1) << 2)
-            | ((genome[0].sinkType & 1) << 3)
-            | ((genome[-1].sinkType & 1) << 4)
-            | ((genome[0].sourceNum & 1) << 5)
-            | ((genome[0].sinkNum & 1) << 6)
-            | ((genome[-1].sourceNum & 1) << 7)
+            (len(genome) % 2) # taille du génome modulo 2 en tant que 1er bit
+            | ((genome[0].sourceType % 2) << 1) # on décale le bit d'après
+            | ((genome[-1].sourceType % 2) << 2) # le >> signifie qu'on le place à la suite 
+            | ((genome[0].sinkType % 2) << 3)#d'un nombre n
+            | ((genome[-1].sinkType % 2) << 4)
+            | ((genome[0].sourceNum % 2) << 5)
+            | ((genome[0].sinkNum % 2) << 6)
+            | ((genome[-1].sourceNum % 2) << 7)
     )
         return value
     
     #on transforme les valeurs de couleur en couleur rgb
+    # On défini la couleur tel que les valeurs définies par make_genetic_color_value
+    # soient isolés à certains bits. Par exemple, le vert est défini par un isolement des 5 
+    # premiers bits de c et ces valeurs sont ensuites décalés pour donner une 
+    # valeur entre 0 et 255. Le rouge est directement la valeur c
     def genetic_color_to_rgb(self, c, max_color_val=0xb0, max_luma_val=0xb0):
         r = c
         g = (c & 0x1F) << 3
@@ -326,6 +328,16 @@ class BioSim(ParallelEnv):
                 b %= max_color_val
 
         return (r, g, b)
+    
+    # Récuère toutes les couleurs des agents et les mets dans un dictionnaire
+    def get_all_colors(self):
+        self.agent_colors = {}
+        for agents in self.agents :
+            genome = self.agent_genome[agents]
+            value = self.make_genetic_color_value(genome)
+            self.agent_colors[agents] = self.genetic_color_to_rgb(value)
+        return self.agent_colors
+    
 
     def render(self) : 
         if self.render_mode == "rgb_array":
@@ -349,15 +361,13 @@ class BioSim(ParallelEnv):
         # Pour chaque agent, on prend son génome, on applique une couleur selon
         # ce génome.
         # On dessine ensuite un cercle selon cette couleur et la position
-        for agents in self.agents :
-            genome = self.agent_genome[agents]
-            c = self.make_genetic_color_value(genome)
-            color = self.genetic_color_to_rgb(c)
+        for agent in self.agents :
+            color = self.agent_colors[agent]
             pygame.draw.circle(
                 canvas,
-                0,
+                color,
                 #le + 0.5 permet de centrer le cercle
-                (np.array(self.agent_position[agents]) + 0.5) * pix_square_size,
+                (np.array(self.agent_position[agent]) + 0.5) * pix_square_size,
                 #rayon du cercle
                 pix_square_size / 3,
             )

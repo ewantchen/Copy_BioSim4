@@ -68,14 +68,14 @@ class Gene :
         gene.sourceType = np.random.randint(0,2) # 0=NEURON, 1=SENSOR
         gene.sourceNum = np.random.randint(0, 0x7FFF) # 15 bits (comme BioSim)
         gene.sinkType = np.random.randint(0,2) # 0=NEURON, 1=ACTION
-        gene.sinkNum = np.random.randint(0,n_ACTIONS) #15 bits
+        gene.sinkNum = np.random.randint(0,0x7FFF) #15 bits
         gene.weight = Gene.makeRandomWeight()
         return gene
     
     @staticmethod
     def make_random_genome(min_len=10, max_len=50) -> "List[Gene]" :
         #Crée un génome aléatoire
-        length = np.random.randint(min_len, max_len + 1)
+        length = 16
         return [Gene.make_random_gene() for _ in range(length)]
     
     #Gestion de l'aléatoire dans le génome des individus
@@ -110,6 +110,8 @@ class Gene :
             elif len(genome) < max_length :
                 genome.append(Gene.make_random_gene())
         return genome
+
+    
         
 """Conversion du génome en réseau neuronal"""
 class Neuron :
