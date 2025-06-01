@@ -18,7 +18,7 @@ class BioSim(ParallelEnv):
     metadata = {
         "name": "BioSim",
         "render_modes" : ["human", "rgb_array"], 
-        "render_fps" : 4
+        "render_fps" : 60
     }
 
     def __init__(self, size = 128, n_agents = 100, max_time = 100, render_mode=None):
@@ -36,7 +36,7 @@ class BioSim(ParallelEnv):
 
         self.render_mode = render_mode
         self.window = None
-        self.window_size = 512
+        self.window_size = 1024
         self.clock = None
 
         if render_mode == "human":
@@ -332,44 +332,60 @@ class BioSim(ParallelEnv):
             return self._render_frame()
     
     def _render_frame(self) : 
+        # On met une clock pour garder une trace du temps passé
         if self.clock is None and self.render_mode == "human" :
             self.clock = pygame.time.Clock()
         
+        # On crée une surface rempli de blanc
         canvas = pygame.Surface((self.window_size, self.window_size))
         canvas.fill((255,255,255))
+        
+        
+        # taille d'une case en pixels
         pix_square_size = (
             self.window_size / self.size
-        ) #taille d'une case en pixels
+        ) 
 
+        # Pour chaque agent, on prend son génome, on applique une couleur selon
+        # ce génome.
+        # On dessine ensuite un cercle selon cette couleur et la position
         for agents in self.agents :
-            genome = self.agent_genome[agents]
+
+            """genome = self.agent_genome[agents]
             c = self.make_genetic_color_value(genome)
             color = self.genetic_color_to_rgb(c)
+            """
             pygame.draw.circle(
                 canvas,
-                color,
+                """color,"""
                 #le + 0.5 permet de centrer le cercle
                 (np.array(self.agent_position[agents]) + 0.5) * pix_square_size,
                 #rayon du cercle
-                 pix_square_size / 3,
+                pix_square_size / 3,
             )
 
-           #on dessine les lignes de la grille 
+        # on prend la taille de la grille + 1, et on y dessine la grille
         for x in range(self.size + 1) :
+         # lignes horizontales
          pygame.draw.line(
             canvas,
             0,
+            # Le point de départ est sur l'axe horizontal
             (0, pix_square_size * x),
+            # Point d'arrivée est sur la fin de la grille
             (self.window_size, pix_square_size * x),
-            width=3,
+            width=1,
             )
+         # lignes verticales
          pygame.draw.line(
             canvas,
             0,
             (pix_square_size * x, 0),
             (pix_square_size * x, self.window_size),
-            width=3,
+            width=1,
         )
+         
+         
         if self.render_mode == "human":
         # The following line copies our drawings from `canvas` to the visible window
             self.window.blit(canvas, canvas.get_rect())
