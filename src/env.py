@@ -182,6 +182,10 @@ class BioSim(ParallelEnv):
          
 
     def step(self, actions):
+        # On initialise les informations à chaque step pour ensuite utiliser ces informations 
+        # et les envoyer au prochain step. Rewards permet de sélectionner à la fin d'une sim.
+        # Termination et truncations permettent d'éliminer tout les agents non sélectionnés.
+        # Infos est une conditions necéssaire pour PettingZoo. 
         self.rewards = {agents : 0 for agents in self.agents}
         self.termination = {agent: False for agent in self.agents}
         self.truncations = {agents : False for agents in self.agents}
@@ -198,22 +202,25 @@ class BioSim(ParallelEnv):
             if not hasattr(brain, 'neurons') or not brain.neurons:
                 continue  # Passe à l'agent suivant si le cerveau est invalide
 
-            #on prend les valeurs des capteurs
-            #on les met dans le réseau
+            # On récupère les valeurs des inputs par la fonction qui calcule les valeurs
+            # qui vont de 0.0 à 1.0.
             sensor_values = brain._get_sensor_values(self.agent_position[agents], self.size)
             brain.get_sensors_input(sensor_values)
-            #on fait la propagation avant
             brain.feed_forward()
+
+            # Prend en variables les inputs calculés avant et renvoie les résultats calculés. Ça
+            # donne des actions qui vont être ensuite sélectionnées.
             action_outputs = brain.get_action_outputs(sensor_values)
 
-            #action par défaut
+            # Action par défaut dans le cas où le programme n'a pas pu trouver une action à envoyer.
             action_name = "STAY"
 
+            # On prend les action avec la plus forte activation.
             if action_outputs :
                 best_action_index = max(action_outputs, key = action_outputs.get)
                 action_name = ACTIONS[best_action_index]
 
-
+            # On update les positions des agents comme des variables pour les utiliser après.
             current_x, current_y = self.agent_position[agents]
             new_x, new_y = current_x, current_y
 
@@ -239,14 +246,15 @@ class BioSim(ParallelEnv):
             elif action_name == "SOUTH EAST":
                 new_x = min(self.size - 1, current_x + 1)
                 new_y = min(self.size - 1, current_y + 1)
-            # Déplace l'agent vers le bas
 
+            # ici on vérifie que les nouvelles positions respectent les bordures et la position
+            # des autres entités. On change les états de l'ancienne et de la nouvelle position à
+            # des états représentatifs du changement.
             if (new_x, new_y) != (current_x, current_y):
                 if not self.position_occupancy[new_x, new_y] :
                     self.position_occupancy[current_x, current_y] = False
                     self.position_occupancy[new_x, new_y] = True
                     self.agent_position[agents] = [new_x, new_y]
-
 
             if self.render_mode == "human" :
                 self._render_frame()

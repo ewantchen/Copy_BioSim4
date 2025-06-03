@@ -44,7 +44,9 @@ sensor_values = {
     "BOUNDARY_DIST_Y": lambda agent_y, world_size: min(agent_y, world_size - 1 - agent_y) / (world_size // 2)
 }
 
-"""défini une connection possible dans l'agent"""
+# Un Gene est défini comme une connexion entre deux neurones. Il comporte comme information
+# son type de source, l'index de la source, son type de de cible, l'index de la cibe et 
+# enfin, le poid de la connexion.
 class Gene : 
     def __init__(self):
         self.sourceType: int = 0 #0=NEURON, 1=SENSOR
@@ -115,10 +117,15 @@ class Gene :
         
 """Conversion du génome en réseau neuronal"""
 class Neuron :
+    # La classe neuron permet de représenter un neurone dans le réseau neuronal d'un agent.
+    # Elle gére les signeaux entrants et sortants. On y initialise des valeurs arbitraire 
+    # destinées à changer. 
     def __init__(self):
-        self.output : float = 0.5 #Valeur par défaut
-        self.driven: bool = False
-        self.input : float = 0.0 #pour l'instant
+        self.output : float = 0.5 # Représente la valeur de sortie des neurones
+        self.driven: bool = False # Indique si le neurone reçoit un input. Si c'est False,
+        # le neurone ne sera pas activé
+        self.input : float = 0.0 # Accumule les inputs avant l'activation. Réinitialisé à
+        # 0.0 avant chaque propagation.
 
 
 class NeuralNet :
@@ -128,32 +135,11 @@ class NeuralNet :
     
 
     def get_action_outputs(self, sensor_values : Dict[int, float]) -> Dict[int, float] :
-        #Retourne les activations des neurones d'action
-        action_outputs = {i : 0.0 for i in range(n_ACTIONS)}
-        for gene in self.connections : 
-            #Si ça renvoie vers une action
-            if gene.sinkType == 1 :
-                output_value = 0.0
-
-            if gene.sinkNum >= n_ACTIONS : 
-                continue 
-            
-                #si ça vient d'un sensor
-                if gene.sourceType == 1 :
-                    if gene.sourceNum in sensor_values :
-                        output_value = sensor_values[gene.sourceNum] * gene.weightAsFloat()
-                
-                #si ça vient d'un Neurone
-                elif gene.sourceType == 0 :
-                    if gene.sourceNum < len(self.neurons) :
-                        output_value = self.neurons[gene.sourceNum].output * gene.weightAsFloat()
-                
-                action_outputs[gene.sinkNum] += output_value
-
-        return action_outputs    
+        pass  
     
+    # Permet de retourner un dictionnaire qui va mesurer selon la fonction sensor_values
+    # les valeurs normalisées des position des agents.
     def _get_sensor_values(self, agent_position, world_size) -> Dict[int, float]:
-        """Calcule toutes les valeurs des capteurs en utilisant le dictionnaire"""
         x, y = agent_position
     
         return {
@@ -164,60 +150,67 @@ class NeuralNet :
                 4: sensor_values["BOUNDARY_DIST_Y"](y, world_size)
                 }
 
-
+    # Prend tout les sensors qui vont vers des neurones, et transforme les sensor_values en
+    # input du neurone cible. Il marque ensuite le neurone cible comme driven, pour prévenir
+    # qu'il peut être feed_forward().
     def get_sensors_input(self, sensor_values: Dict[int, float]) -> None:
-        """Transmet les entrées sensorielles aux neurones connectés"""
         for gene in self.connections:
-        # Seulement les connexions SENSOR -> NEURON
             if gene.sourceType == 1 and gene.sinkType == 0:
                 if gene.sourceNum in sensor_values:
-                # Accumule les entrées pondérées dans le neurone cible
                     self.neurons[gene.sinkNum].input += (
                         sensor_values[gene.sourceNum] * gene.weightAsFloat()
                 )
                     self.neurons[gene.sinkNum].driven = True
 
-
+    # Cette fonction permet de caluler l'output de chaque neurone qui recoivent des inputs.
+    # Il prend en entré un input, qui est un nombre, et utilise 
+    # la fonction tanh pour trouver son output et le normaliser. 
     def feed_forward(self) -> None:
-        """Propage les signaux à travers le réseau"""
-    # 1. Traitement des neurones
         for neuron in self.neurons:
             if neuron.driven:
-                neuron.output = np.tanh(neuron.input)  # Fonction d'activation
-                neuron.input = 0.0  # Réinitialise pour le prochain cycle
+                neuron.output = np.tanh(neuron.input)  
+                neuron.input = 0.0 
     
+
+    # Permet de faire des liens entre les neurones du génome.
     @classmethod
     def create_wiring_from_genome(cls, genome: List[Gene], max_neurons=1000) -> "NeuralNet" :
-            """convertit le génome en réseau neuronal"""
-            # étape 1 : filtrer les neurones inutiles
-            used_neurons = set()
+            # On crée une liste abec tout les neurones du génome
+            used_neurons = []
             for gene in genome : 
                 if gene.sinkType == 0 : 
-                    used_neurons.add(gene.sinkNum)
+                    used_neurons.append(gene.sinkNum)
                 if gene.sourceType == 0 :
-                    used_neurons.add(gene.sourceNum)
+                    used_neurons.append(gene.sourceNum)
 
 
-            # Étape 2: Renumérotation (ex: [5, 10, 15] → [0, 1, 2])
+            # Tout les neurones provenant du génome sont classés de façon numérotés
             neuron_remap = {old: new for new, old in enumerate(sorted(used_neurons))}
 
-            #Étape 3 : Construire le réseau 
+            # L'objet NeuralNet est décri comme une liste de genes(connexions) et une 
+            # liste de neurones
             net = NeuralNet()
+
+            # On ajoute tout les neurones à NeuralNet
             net.neurons = [Neuron() for _ in range(len(used_neurons))]
-
-
             
+            # On ajoute les gene du génome dans NeuralNet
             for gene in genome : 
                 #Ignorer les connexions vers les neurones supprimés 
                 if gene.sinkType == 0 and gene.sinkNum not in neuron_remap :
                     continue
                 
+                # Voir commentaire sur l'objet Gene()
                 new_gene = Gene()
                 
+                # On ajoute les informations de la connexion
                 new_gene.sourceType = gene.sourceType
                 new_gene.sinkType = gene.sinkType
                 new_gene.weight = gene.weight
 
+                # Si la connexion est un neurone interne, on l'ajoute dans la liste numérotée
+                # des neurones. Si c'est un sensor, on l'ajoute directement dans new_gene
+                # Pareil pour la cible.
                 if gene.sourceType == 0 : 
                     new_gene.sourceNum = neuron_remap[gene.sourceNum]
                 else : 
@@ -228,6 +221,7 @@ class NeuralNet :
                 else : 
                     new_gene.sinkNum = gene.sinkNum
                 
+                # Ces nouvelles connexions sont ensuite ajoutées dans une liste "connections"
                 net.connections.append(new_gene)
 
             return net
