@@ -176,8 +176,35 @@ class NeuralNet :
     # les connections entre eux.
     @classmethod
     def create_wiring_from_genome(cls, genome: List[Gene], max_neurons=1000) -> "NeuralNet" :
-            # On crée une liste avec tout les neurones du génome
-            used_neurons = []
+            # L'objet NeuralNet est décri comme une liste de genes(connexions) et une 
+            # liste de neurones
+            net = NeuralNet()       
+
+            # On initialise une liste. On prend toutes les connexions et on ajoute 
+            # l'index de leurs cibles et leurs sources. Si c'est un sensor ou 
+            # une action, alors l'index dépend de la liste d'actions/sensors
+            # tandis que l'index du neurones interne dépend du nombres de neurones 
+            # max
+            net.connections = []
+            # On ajoute les gene du génome dans NeuralNet, dans net.connections
+            for gene in genome : 
+                if gene.sinkType == 0 :
+                    gene.sinkNum %= 0x7FFF
+                else :
+                    gene.sinkNum %= n_ACTIONS
+
+                if gene.sourceType == 0 :
+                    gene.sourceNum %= 0x7FFF
+                else :
+                    gene.sourceNum %= n_SENSORS
+                
+
+                # Ces nouvelles connexions sont ensuite ajoutées dans une liste "connections"
+                net.connections.append(gene)
+                
+            # On crée une liste avec tout les neurones internes du génome.
+            # On n'ajoute pas les neurones actions et sensors
+            used_neurons = set()
             for gene in genome : 
                 if gene.sinkType == 0 : 
                     used_neurons.append(gene.sinkNum)
@@ -190,43 +217,13 @@ class NeuralNet :
             # dans l'ordre.
             neuron_remap = {old: new for new, old in enumerate(sorted(used_neurons))}
 
-            # L'objet NeuralNet est décri comme une liste de genes(connexions) et une 
-            # liste de neurones
-            net = NeuralNet()
+
 
             # On ajoute tout les neurones à NeuralNet. Ça donne une liste de neurones
             # Voir l'objet NeuralNet()
-            net.neurons = [Neuron() for _ in range(len(used_neurons))]
+            net.neurons = [Neuron() for _ in range(len(neuron_remap))]
             
-            # On ajoute les gene du génome dans NeuralNet
-            for gene in genome : 
-                #Ignorer les connexions vers les neurones supprimés 
-                if gene.sinkType == 0 and gene.sinkNum not in neuron_remap :
-                    continue
-                
-                # Voir commentaire sur l'objet Gene()
-                new_gene = Gene()
-                
-                # On ajoute les informations de la connexion
-                new_gene.sourceType = gene.sourceType
-                new_gene.sinkType = gene.sinkType
-                new_gene.weight = gene.weight
 
-                # Si la connexion est un neurone interne, on l'ajoute dans la liste numérotée
-                # des neurones. Si c'est un sensor, on l'ajoute directement dans new_gene
-                # Pareil pour la cible.
-                if gene.sourceType == 0 : 
-                    new_gene.sourceNum = neuron_remap[gene.sourceNum]
-                else : 
-                    new_gene.sourceNum = gene.sourceNum
-
-                if gene.sinkType == 0 :
-                    new_gene.sinkNum = neuron_remap[gene.sinkNum]
-                else : 
-                    new_gene.sinkNum = gene.sinkNum
-                
-                # Ces nouvelles connexions sont ensuite ajoutées dans une liste "connections"
-                net.connections.append(new_gene)
 
             return net
         
