@@ -172,10 +172,11 @@ class NeuralNet :
                 neuron.input = 0.0 
     
 
-    # Permet de faire des liens entre les neurones du génome.
+    # Permet de faire des liens entre les neurones du génome. Liste les neurones et
+    # les connections entre eux.
     @classmethod
     def create_wiring_from_genome(cls, genome: List[Gene], max_neurons=1000) -> "NeuralNet" :
-            # On crée une liste abec tout les neurones du génome
+            # On crée une liste avec tout les neurones du génome
             used_neurons = []
             for gene in genome : 
                 if gene.sinkType == 0 : 
@@ -184,14 +185,17 @@ class NeuralNet :
                     used_neurons.append(gene.sourceNum)
 
 
-            # Tout les neurones provenant du génome sont classés de façon numérotés
+            # Tout les neurones provenant du génome sont classés de façon 
+            # numérotés. Ça permet à la fonction Feedfoward() de parcourir le réseau
+            # dans l'ordre.
             neuron_remap = {old: new for new, old in enumerate(sorted(used_neurons))}
 
             # L'objet NeuralNet est décri comme une liste de genes(connexions) et une 
             # liste de neurones
             net = NeuralNet()
 
-            # On ajoute tout les neurones à NeuralNet
+            # On ajoute tout les neurones à NeuralNet. Ça donne une liste de neurones
+            # Voir l'objet NeuralNet()
             net.neurons = [Neuron() for _ in range(len(used_neurons))]
             
             # On ajoute les gene du génome dans NeuralNet
