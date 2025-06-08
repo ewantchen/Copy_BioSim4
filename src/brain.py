@@ -214,18 +214,37 @@ class NeuralNet :
             # On crée une liste avec tout les neurones internes du génome.
             # On n'ajoute pas les neurones actions et sensors.
             # Pour chaque connexion, on regarde sa source et sa cible.
-            node_map = {}
+            node_map : dict[int, Node] = {}
             for gene in net.connections : 
                 if gene.sinkType == 0 : 
                     if gene.sinkNum not in node_map and gene.sinkNum < 0x7FFF :
                         node_map[gene.sinkNum] = Node()
+                        node_map[gene.sinkNum].numSelfInputs = 0
+                        node_map[gene.sinkNum].numOtherInputs = 0
+                        node_map[gene.sinkNum].numOutputs = 0
+
                     if gene.sourceType == 0 and gene.sourceNum == gene.sinkNum :
                         node_map[gene.sinkNum].numSelfInputs += 1
                     else : 
                         node_map[gene.sinkNum].numOtherInputs += 1
 
+                if gene.sourceType == 0 : 
+                    if gene.sourceNum not in node_map and gene.sourceNum < 0x7FFF :
+                        node_map[gene.sourceNum] = Node()
+                        node_map[gene.sourceNum].numSelfInputs = 0
+                        node_map[gene.sourceNum].numOtherInputs = 0
+                        node_map[gene.sourceNum].numOutputs = 0
+                    node_map[gene.sourceNum].numOutputs += 1
+            
+            alldone = False
+            while alldone == False :
+                alldone = True
+                for node in node_map :
+                    if gene.sourceNum == gene.sinkNum and node_map[gene.sinkNum] == 0 :
+                        pass
 
 
+            
 
 
 
