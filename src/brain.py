@@ -44,6 +44,7 @@ sensor_values = {
     "BOUNDARY_DIST_Y": lambda agent_y, world_size: min(agent_y, world_size - 1 - agent_y) / (world_size // 2)
 }
 
+
 # Un Gene est défini comme une connexion entre deux neurones. Il comporte comme information
 # son type de source, l'index de la source, son type de de cible, l'index de la cibe et 
 # enfin, le poid de la connexion.
@@ -113,6 +114,14 @@ class Gene :
                 genome.append(Gene.make_random_gene())
         return genome
 
+# On défini un objet Node, qui permet d'avoir toutes les informations sur
+# chaque neurones. Ça permet de supprimper tout les neurones inutiles.
+class Node : 
+    def __init__(self):
+        self.numOutputs  = 0
+        self.numSelfInputs = 0
+        self.numOtherInputs = 0
+
     
         
 """Conversion du génome en réseau neuronal"""
@@ -174,8 +183,8 @@ class NeuralNet :
 
     # Permet de faire des liens entre les neurones du génome. Liste les neurones et
     # les connections entre eux.
-    @classmethod
-    def create_wiring_from_genome(cls, genome: List[Gene], max_neurons=1000) -> "NeuralNet" :
+    @staticmethod
+    def create_wiring_from_genome(genome: List[Gene], max_neurons=1000) -> "NeuralNet" :
             # L'objet NeuralNet est décri comme une liste de genes(connexions) et une 
             # liste de neurones
             net = NeuralNet()       
@@ -203,19 +212,29 @@ class NeuralNet :
                 net.connections.append(gene)
                 
             # On crée une liste avec tout les neurones internes du génome.
-            # On n'ajoute pas les neurones actions et sensors
-            used_neurons = set()
-            for gene in genome : 
+            # On n'ajoute pas les neurones actions et sensors.
+            # Pour chaque connexion, on regarde sa source et sa cible.
+            node_map = {}
+            for gene in net.connections : 
                 if gene.sinkType == 0 : 
-                    used_neurons.append(gene.sinkNum)
-                if gene.sourceType == 0 :
-                    used_neurons.append(gene.sourceNum)
+                    if gene.sinkNum not in node_map and gene.sinkNum < 0x7FFF :
+                        node_map[gene.sinkNum] = Node()
+                    if gene.sourceType == 0 and gene.sourceNum == gene.sinkNum :
+                        node_map[gene.sinkNum].numSelfInputs += 1
+                    else : 
+                        node_map[gene.sinkNum].numOtherInputs += 1
+
+
+
+
+
+
 
 
             # Tout les neurones provenant du génome sont classés de façon 
             # numérotés. Ça permet à la fonction Feedfoward() de parcourir le réseau
             # dans l'ordre.
-            neuron_remap = {old: new for new, old in enumerate(sorted(used_neurons))}
+            neuron_remap = {old: new for new, old in enumerate(sorted(node_map))}
 
 
 
