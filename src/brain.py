@@ -8,11 +8,7 @@ ACTIONS = [
     "SOUTH",
     "EAST",
     "WEST",
-    "NORTH WEST",
-    "NORTH EAST",
-    "SOUTH WEST",
-    "SOUTH EAST",
-    "STAY"
+    "STAY",
 ]
 
 n_ACTIONS = len(ACTIONS)

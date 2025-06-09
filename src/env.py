@@ -3,6 +3,7 @@ from brain import (
     Gene,
     NeuralNet,
     ACTIONS,
+    SENSORS,
     sensor_values
 )
 import functools
@@ -179,7 +180,9 @@ class BioSim(ParallelEnv):
         }
         return observations
 
-         
+    # Fonction qui permet de transformer une action en probabilité   
+    def Prob2Bool(self, factor : float) -> bool :
+        return random.random() < factor
 
     def step(self, actions):
         # On initialise les informations à chaque step pour ensuite utiliser ces informations 
@@ -191,70 +194,41 @@ class BioSim(ParallelEnv):
         self.truncations = {agents : False for agents in self.agents}
         infos = {agents : {} for agents in self.agents}
 
+        for agent in self.agents : 
+            movex = 0.0
+            movey = 0.0
+            actionLevels = NeuralNet.feed_forward(self.agent_brains)
+            movex += actionLevels["EAST"]
+            movex -= actionLevels["WEST"]
+            movey += actionLevels["NORTH"]
+            movey -= actionLevels["SOUTH"]
 
+            movex = np.tanh(movex) 
+            movey = np.tanh(movey) 
 
+            probX = 1 if self.Prob2Bool(abs(movex)) else 0
+            probY = 1 if self.Prob2Bool(abs(movey)) else 0 
 
-        #propagation avant
-        for agents in self.agents :
-            
-            #on prend l'agent et son cerveau
-            brain = self.agent_brains[agents]
-            if not hasattr(brain, 'neurons') or not brain.neurons:
-                continue  # Passe à l'agent suivant si le cerveau est invalide
+            signX = -1 if movex <0.0 else 1 
+            signY = -1 if movey < 0.0 else 1
 
-            # On récupère les valeurs des inputs par la fonction qui calcule les valeurs
-            # qui vont de 0.0 à 1.0.
-            sensor_values = brain._get_sensor_values(self.agent_position[agents], self.size)
-            brain.get_sensors_input(sensor_values)
-            brain.feed_forward()
+            movement_offset = int(probX * signX), int(probY*signY)
 
-            # Prend en variables les inputs calculés avant et renvoie les résultats calculés. Ça
-            # donne des actions qui vont être ensuite sélectionnées.
-            action_outputs = brain.get_action_outputs(sensor_values)
-
-            # Action par défaut dans le cas où le programme n'a pas pu trouver une action à envoyer.
-            action_name = "STAY"
-
-            # On prend les action avec la plus forte activation.
-            if action_outputs :
-                best_action_index = max(action_outputs, key = action_outputs.get)
-                action_name = ACTIONS[best_action_index]
-
+ 
             # On update les positions des agents comme des variables pour les utiliser après.
-            current_x, current_y = self.agent_position[agents]
-            new_x, new_y = current_x, current_y
+            current_x, current_y = self.agent_position[agent]
+            new_x = current_x + movement_offset[0]
+            new_y = current_y + movement_offset[1]
 
-            #le max et le min permet d'avoir des bordures en comparant 0 et position
-            # Le 0, 0 commence en haut à gauche, donc y doit être rapproché de 0 pour monter.
-            if action_name == "NORTH":
-                new_y = max(0, current_y - 1)
-            elif action_name == "SOUTH":
-                new_y = min(self.size - 1, current_y + 1)
-            elif action_name == "WEST":
-                new_x = max(0, current_x - 1)
-            elif action_name == "EAST":
-                new_x = min(self.size - 1, current_x + 1)
-            elif action_name == "NORTH WEST":
-                new_x = max(0, current_x - 1)
-                new_y = max(0, current_y - 1)
-            elif action_name == "NORTH EAST":
-                new_x = min(self.size - 1, current_x + 1)
-                new_y = max(0, current_y - 1)
-            elif action_name == "SOUTH WEST":
-                new_x = max(0, current_x - 1)
-                new_y = min(self.size - 1, current_y + 1)
-            elif action_name == "SOUTH EAST":
-                new_x = min(self.size - 1, current_x + 1)
-                new_y = min(self.size - 1, current_y + 1)
 
             # ici on vérifie que les nouvelles positions respectent les bordures et la position
             # des autres entités. On change les états de l'ancienne et de la nouvelle position à
             # des états représentatifs du changement.
             if (new_x, new_y) != (current_x, current_y):
-                if not self.position_occupancy[new_x, new_y] :
+                if not self.position_occupancy[new_x, new_y] and 0 <= new_x < self.size and  0<= new_y < self.size:
                     self.position_occupancy[current_x, current_y] = False
                     self.position_occupancy[new_x, new_y] = True
-                    self.agent_position[agents] = [new_x, new_y]
+                    self.agent_position[agent] = [new_x, new_y]
 
             if self.render_mode == "human" :
                 self._render_frame()
