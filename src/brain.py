@@ -213,16 +213,17 @@ class NeuralNet :
                 
             # On crée une liste avec tout les neurones internes du génome.
             # On n'ajoute pas les neurones actions et sensors.
-            # Pour chaque connexion, on regarde sa source et sa cible.
+            # Pour chaque connexion, on regarde sa source et sa cible. On les décrits ensuite
+            # dans node_map comme un node. Voir la class Node. Node_map permet de voir quels connexions 
+            # sont inutiles et les supprimer. Permet aussi ensuite de faire la liste de neurones
+            # pour le neural net.
             node_map : dict[int, Node] = {}
             for gene in net.connections : 
                 if gene.sinkType == 0 : 
                     if gene.sinkNum not in node_map and gene.sinkNum < 0x7FFF :
                         node_map[gene.sinkNum] = Node()
-                        node_map[gene.sinkNum].numSelfInputs = 0
-                        node_map[gene.sinkNum].numOtherInputs = 0
-                        node_map[gene.sinkNum].numOutputs = 0
 
+                    # On ajoute aussi aux variables les infos qu'on a.
                     if gene.sourceType == 0 and gene.sourceNum == gene.sinkNum :
                         node_map[gene.sinkNum].numSelfInputs += 1
                     else : 
@@ -231,22 +232,37 @@ class NeuralNet :
                 if gene.sourceType == 0 : 
                     if gene.sourceNum not in node_map and gene.sourceNum < 0x7FFF :
                         node_map[gene.sourceNum] = Node()
-                        node_map[gene.sourceNum].numSelfInputs = 0
-                        node_map[gene.sourceNum].numOtherInputs = 0
-                        node_map[gene.sourceNum].numOutputs = 0
-                    node_map[gene.sourceNum].numOutputs += 1
+                        node_map[gene.sourceNum].numOutputs += 1
             
+
+            # On ajoute un moyen de trier et supprimer tous les neurones inutiles.
+            # Tant que l'on supprime des nodes, on recommence la boucle.
+            # On utilise ensuite node_map comme une liste, et dans cette liste, chaque 
+            # fois que la condition d'inutilité est vérifiée pour un neurone, on regarde dans notre liste 
+            # net.connections si des connexions vont vers ce neurone.
+            # Si c’est le cas, on les supprime une par une. Et si la source de ces connexions
+            # est un autre neurone, on décrémente son nombre de sorties (numOutputs).
+            # Une fois toutes les connexions vers ce neurone supprimées, on supprime
+            # le neurone lui-même de node_map.
+            # On recommence tant que des suppressions sont effectuées, car cela peut
+            # rendre d'autres neurones inutiles à leur tour (effet en cascade).
             alldone = False
-            while alldone == False :
+            while alldone == False:
                 alldone = True
-                for node in node_map :
-                    if gene.sourceNum == gene.sinkNum and node_map[gene.sinkNum] == 0 :
-                        pass
-
-
-            
-
-
+                for neuron in list(node_map):
+                    node = node_map[neuron]
+                    if node.numOutputs == 0 or node.numOutputs == node.numSelfInputs :
+                        i = 0
+                        while i < len(net.connections):
+                            gene = net.connections[i]
+                            if gene.sinkType == 0 and gene.sinkNum == neuron:
+                                if gene.sourceType == 0 and gene.sourceNum in node_map:
+                                    node_map[gene.sourceNum].numOutputs -= 1
+                                net.connections.pop(i)
+                            else:
+                                i += 1
+                        del node_map[neuron]
+                        alldone = False
 
 
 
@@ -255,14 +271,20 @@ class NeuralNet :
             # dans l'ordre.
             neuron_remap = {old: new for new, old in enumerate(sorted(node_map))}
 
-
+            # On indexe aussi les connexions selon la position des neurones avec neuron_remap.
+            # Ça permet de mieux retrouver nos connexions plus tard.
+            for gene in net.connections:
+                if gene.sinkType == 0:
+                    gene.sinkNum = neuron_remap[gene.sinkNum]
+                if gene.sourceType == 0:
+                    gene.sourceNum = neuron_remap[gene.sourceNum]
 
             # On ajoute tout les neurones à NeuralNet. Ça donne une liste de neurones
             # Voir l'objet NeuralNet()
             net.neurons = [Neuron() for _ in range(len(neuron_remap))]
             
 
-
+            # On retourne les deux listes
             return net
         
 
