@@ -143,11 +143,8 @@ class NeuralNet :
         self.neurons : List[Neuron] = []
     
 
-    def get_action_outputs(self, sensor_values : Dict[int, float]) -> Dict[int, float] :
-        pass  
-    
-    # Permet de retourner un dictionnaire qui va mesurer selon la fonction sensor_values
-    # les valeurs normalisées des position des agents.
+    # Cette fonction permet de trouver les valeurs des sensors qui sont dans le réseau 
+    # de neurones.
     def _get_sensor_values(self, agent_position, world_size) -> Dict[int, float]:
         x, y = agent_position
     
@@ -159,28 +156,48 @@ class NeuralNet :
                 4: sensor_values["BOUNDARY_DIST_Y"](y, world_size)
                 }
 
-    # Prend tout les sensors qui vont vers des neurones, et transforme les sensor_values en
-    # input du neurone cible. Il marque ensuite le neurone cible comme driven, pour prévenir
-    # qu'il peut être feed_forward().
-    def get_sensors_input(self, sensor_values: Dict[int, float]) -> None:
-        for gene in self.connections:
-            if gene.sourceType == 1 and gene.sinkType == 0:
-                if gene.sourceNum in sensor_values:
-                    self.neurons[gene.sinkNum].input += (
-                        sensor_values[gene.sourceNum] * gene.weightAsFloat()
-                )
-                    self.neurons[gene.sinkNum].driven = True
 
-    # Cette fonction permet de caluler l'output de chaque neurone qui recoivent des inputs.
-    # Il prend en entré un input, qui est un nombre, et utilise 
-    # la fonction tanh pour trouver son output et le normaliser. 
-    def feed_forward(self) -> None:
-        for neuron in self.neurons:
-            if neuron.driven:
-                neuron.output = np.tanh(neuron.input)  
-                neuron.input = 0.0 
+
+    # Cette fonction permet de trouver le résultat du calcul du réseau de neurones
+    # Pour ce faire, on initialise des variables. Ensuite, on regarde dans chaque connexions :
+    # - Si la destination est une action (sinkType == 1) et qu'on n’a pas encore calculé
+    # les sorties des neurones, on applique la fonction tanh() sur tous les neurones "driven",
+    # pour obtenir leurs outputs dans l'intervalle [-1.0, 1.0],
+    # - si la source est un sensor, alors l'input value du neurone est égal à l'output des sensor
+    # qui est trouvé par la fonction get_sensor_values. Sinon, la valeur de l'input est égale
+    # à l'output du neurone source. 
+    # - si la cible est une action, alors on ajoute l'output du neurone à actionLevels, sinon on l'ajoute
+    # à neuronAccumulators.
+    def feed_forward(self, agent_position, world_size) :
+        actionLevels = [0.0] * n_ACTIONS  # Tableau pour dire quelle valeurs sont les plus fortes.
+        neuronAccumulators = [0.0] * len(self.neurons) # Tableau pour trier les outputs de chaque neurones.
+        neuronOutputsComputed = False # Permet de calculer la valeur de tout les neurones internes avant.
+        sensor_vals = self._get_sensor_values(agent_position, world_size) # On récupère les valeurs des sensors dès le début.
+        for gene in self.connections :
+            # Cette condition est utilisé à la fin du code.
+            if gene.sinkType == 1 and neuronOutputsComputed == False :
+                for i, neuron in enumerate(self.neurons) :
+                    if self.neurons[neuron].driven == True :
+                        self.neurons[neuron].output = np.tanh(neuronAccumulators[i])
+                neuronOutputsComputed = True
+
+            # Les deux conditions d'après sont générales.
+            if gene.sourceType == 1 :
+                inputVal = sensor_vals[gene.sourceNum]
+            else :
+                inputVal = self.neurons[gene.sourceNum].output
+            
+            if gene.sinkType == 1 :
+                actionLevels[gene.sinkNum] += inputVal * gene.weightAsFloat()
+            else :
+                neuronAccumulators[gene.sinkNum] += inputVal * gene.weightAsFloat()
+        
+        # Retourne actionLevels, représentant les niveau d'activation brute des agents
+        return actionLevels
     
 
+
+    
     # Permet de faire des liens entre les neurones du génome. Liste les neurones et
     # les connections entre eux.
     @staticmethod
