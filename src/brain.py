@@ -25,20 +25,23 @@ n_SENSORS = len(SENSORS)
 
 sensor_values = {
     # Position X normalisée [0, 1] où 0 = bord gauche, 1 = bord droit
-    "X_POS": lambda agent_x, world_size: agent_x / (world_size - 1),
+    "X_POS": lambda agent_x, world_size: float(agent_x) / float((world_size - 1)),
     
     # Position Y normalisée [0, 1] où 0 = bord bas, 1 = bord haut
-    "Y_POS": lambda agent_y, world_size: agent_y / (world_size - 1),
+    "Y_POS": lambda agent_y, world_size: float(agent_y) / float((world_size - 1)),
     
     # Valeur aléatoire pour l'aléatoire [0, 1]
     "RANDOM": lambda *_: random.random(),
     
     # Distance au bord X normalisée [0, 1] où 0 = au bord, 1 = au centre
-    "BOUNDARY_DIST_X": lambda agent_x, world_size: min(agent_x, world_size - 1 - agent_x) / (world_size // 2),
+    "BOUNDARY_DIST_X": lambda agent_x, world_size: min(float(agent_x), 
+                    float(world_size) - 1 - float(agent_x)) / float((world_size) // 2),
     
     # Distance au bord Y normalisée [0, 1] où 0 = au bord, 1 = au centre
-    "BOUNDARY_DIST_Y": lambda agent_y, world_size: min(agent_y, world_size - 1 - agent_y) / (world_size // 2)
+    "BOUNDARY_DIST_Y": lambda agent_y, world_size: min(float(agent_y),
+            float(world_size) - 1 - float(agent_y)) / float((world_size) // 2)
 }
+
 
 
 # Un Gene est défini comme une connexion entre deux neurones. Il comporte comme information
@@ -142,7 +145,7 @@ class NeuralNet :
     # Cette fonction permet de trouver les valeurs des sensors qui sont dans le réseau 
     # de neurones.
     def _get_sensor_values(self, agent_position, world_size) -> Dict[int, float]:
-        x, y = agent_position
+        x, y = tuple(agent_position)[:2]
     
         return {
                 0: sensor_values["X_POS"](x, world_size),
@@ -173,8 +176,8 @@ class NeuralNet :
             # Cette condition est utilisé à la fin du code.
             if gene.sinkType == 1 and neuronOutputsComputed == False :
                 for i, neuron in enumerate(self.neurons) :
-                    if self.neurons[neuron].driven == True :
-                        self.neurons[neuron].output = np.tanh(neuronAccumulators[i])
+                    if neuron.driven == True :
+                        neuron.output = np.tanh(neuronAccumulators[i])
                 neuronOutputsComputed = True
 
             # Les deux conditions d'après sont générales.

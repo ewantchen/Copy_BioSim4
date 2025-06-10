@@ -19,7 +19,7 @@ class BioSim(ParallelEnv):
     metadata = {
         "name": "BioSim",
         "render_modes" : ["human", "rgb_array"], 
-        "render_fps" : 60
+        "render_fps" : 20
     }
 
     def __init__(self, size = 128, n_agents = 100, max_time = 100, render_mode=None):
@@ -37,7 +37,7 @@ class BioSim(ParallelEnv):
 
         self.render_mode = render_mode
         self.window = None
-        self.window_size = 1024
+        self.window_size = 512
         self.clock = None
 
         if render_mode == "human":
@@ -104,7 +104,7 @@ class BioSim(ParallelEnv):
          # de la simulation
          for agents in self.agents :
               x, y = self.agent_position[agents]
-              if self.timestep >= self.max_time and x > self.size // 2:
+              if x > self.size // 2:
                    self.rewards[agents] = 0
               else : 
                   self.rewards[agents] = 1
@@ -124,12 +124,15 @@ class BioSim(ParallelEnv):
                 #on selection les parents au hasard.
                 #Peut être changé dans le futur pour correspondre
                 #à la géographie
-                    parent = random.choice(self.survivors)
-                    parent_genome = self.agent_genome[parent]
+                    parent1 = random.choice(self.survivors)
+                    parent2 = random.choice(self.survivors)
+                    parent1_genome = self.agent_genome[parent1]
+                    parent2_genome = self.agent_genome[parent2]
                    
                     #on prend le genome des parents
-                    half_genome = len(parent_genome) // 2
-                    child_genome = parent_genome[:half_genome]
+                    half_genome2 = len(parent2_genome) // 2
+                    half_genome1 = len(parent1_genome)//2
+                    child_genome = parent1_genome[:half_genome1] + parent2_genome[half_genome2:]
 
                     #création du génome des enfants
                     child_genome = Gene.apply_point_mutations(child_genome)
@@ -195,13 +198,14 @@ class BioSim(ParallelEnv):
         infos = {agents : {} for agents in self.agents}
 
         for agent in self.agents : 
+            x, y = self.agent_position[agent]
             movex = 0.0
             movey = 0.0
-            actionLevels = NeuralNet.feed_forward(self.agent_brains)
-            movex += actionLevels["EAST"]
-            movex -= actionLevels["WEST"]
-            movey += actionLevels["NORTH"]
-            movey -= actionLevels["SOUTH"]
+            actionLevels = self.agent_brains[agent].feed_forward((x,y), self.size)
+            movex += actionLevels[2]
+            movex -= actionLevels[3]
+            movey += actionLevels[0]
+            movey -= actionLevels[1]
 
             movex = np.tanh(movex) 
             movey = np.tanh(movey) 
@@ -225,10 +229,11 @@ class BioSim(ParallelEnv):
             # des autres entités. On change les états de l'ancienne et de la nouvelle position à
             # des états représentatifs du changement.
             if (new_x, new_y) != (current_x, current_y):
-                if not self.position_occupancy[new_x, new_y] and 0 <= new_x < self.size and  0<= new_y < self.size:
-                    self.position_occupancy[current_x, current_y] = False
-                    self.position_occupancy[new_x, new_y] = True
-                    self.agent_position[agent] = [new_x, new_y]
+                if 0 <= new_x < self.size and  0<= new_y < self.size:
+                    if not self.position_occupancy[new_x, new_y] :
+                        self.position_occupancy[current_x, current_y] = False
+                        self.position_occupancy[new_x, new_y] = True
+                        self.agent_position[agent] = [new_x, new_y]
 
             if self.render_mode == "human" :
                 self._render_frame()
