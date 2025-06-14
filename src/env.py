@@ -379,7 +379,7 @@ class BioSim(ParallelEnv):
             (pix_square_size * x, self.window_size),
             width=1,
         )
-         
+
 
         if self.render_mode == "human":
         # Blit copie le contenu sur la fenêtre
@@ -397,7 +397,15 @@ class BioSim(ParallelEnv):
             return np.transpose(
             np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
         )
-    
+        while True:
+ 
+        # Watch for keyboard and mouse events.
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.close()
+
+
+                    
     def close(self) :
         if self.window is not None :
             pygame.display.quit()

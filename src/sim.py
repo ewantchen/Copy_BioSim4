@@ -4,6 +4,7 @@ import pygame
 
 env = BioSim(size = 128, n_agents = 20, max_time= 100, render_mode = "human")
 observations = env.reset()
+running = True
 
 pygame.init()
 for generation in range(20) :
