@@ -2,18 +2,28 @@ from env import BioSim
 import time
 import pygame
 
-env = BioSim(size = 128, n_agents = 20, max_time= 100, render_mode = "human")
+env = BioSim(size = 128, n_agents = 21, max_time= 100, render_mode = "human")
 observations = env.reset()
 running = True
+generation = 0
 
 pygame.init()
-for generation in range(20) :
+while generation < 20 and running :
     print(f"Génération {generation+1}/20 - Agents : {len(env.agents)}")
 
-    for i in range(env.max_time) :
+
+
+    for i in range(env.max_time) :    
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        if not running :
+            break
         observations, rewards, terminations, truncations, infos = env.step({})
 
+
     env.end_of_sim()
+    generation += 1
 
 env.close()
 pygame.quit()

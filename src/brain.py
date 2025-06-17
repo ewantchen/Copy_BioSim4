@@ -269,12 +269,17 @@ class NeuralNet :
                     node = node_map[neuron]
                     if node.numOutputs == 0 or node.numOutputs == node.numSelfInputs :
                         i = 0
+                        removed_connections = 0
                         while i < len(net.connections):
                             gene = net.connections[i]
-                            if gene.sinkType == 0 and gene.sinkNum == neuron:
+                            if (gene.sinkType == 0 and gene.sinkNum == neuron) or (gene.sourceType == 0 and gene.sourceNum == neuron):
+                                # Si la connexion supprime la sortie d'un autre neurone, décrémente le compteur
                                 if gene.sourceType == 0 and gene.sourceNum in node_map:
                                     node_map[gene.sourceNum].numOutputs -= 1
+                                if gene.sinkType == 0 and gene.sinkNum in node_map:
+                                    node_map[gene.sinkNum].numOtherInputs -= 1
                                 net.connections.pop(i)
+                                removed_connections += 1
                             else:
                                 i += 1
                         del node_map[neuron]
@@ -287,6 +292,8 @@ class NeuralNet :
             # dans l'ordre.
             neuron_remap = {old: new for new, old in enumerate(sorted(node_map))}
 
+
+            
             # On indexe aussi les connexions selon la position des neurones avec neuron_remap.
             # Ça permet de mieux retrouver nos connexions plus tard.
             for gene in net.connections:
@@ -294,6 +301,7 @@ class NeuralNet :
                     gene.sinkNum = neuron_remap[gene.sinkNum]
                 if gene.sourceType == 0:
                     gene.sourceNum = neuron_remap[gene.sourceNum]
+            
 
             # On ajoute tout les neurones à NeuralNet. Ça donne une liste de neurones
             # Voir l'objet NeuralNet()

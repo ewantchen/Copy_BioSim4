@@ -1,3 +1,4 @@
+import pygame.gfxdraw
 from brain import (
     Neuron,
     Gene,
@@ -19,7 +20,7 @@ class BioSim(ParallelEnv):
     metadata = {
         "name": "BioSim",
         "render_modes" : ["human", "rgb_array"], 
-        "render_fps" : 20
+        "render_fps" : 120
     }
 
     def __init__(self, size = 128, n_agents = 100, max_time = 100, render_mode=None):
@@ -112,8 +113,6 @@ class BioSim(ParallelEnv):
                    
     
     def selection(self) :
-        if not self.survivors : 
-            print("aucun n'a survécu")
         self.survivors = [agent for agent in self.survivors
                             if agent in self.agent_genome]
         new_population = []
@@ -237,6 +236,9 @@ class BioSim(ParallelEnv):
 
             if self.render_mode == "human" :
                 self._render_frame()
+
+
+            
             
         self.timestep += 1 
         
@@ -356,9 +358,9 @@ class BioSim(ParallelEnv):
                 #le + 0.5 permet de centrer le cercle
                 (np.array(self.agent_position[agent]) + 0.5) * pix_square_size,
                 #rayon du cercle
-                pix_square_size / 3,
+                pix_square_size / 2,
             )
-
+        """"
         # on prend la taille de la grille + 1, et on y dessine la grille
         for x in range(self.size + 1) :
          # lignes horizontales
@@ -378,9 +380,8 @@ class BioSim(ParallelEnv):
             (pix_square_size * x, 0),
             (pix_square_size * x, self.window_size),
             width=1,
-        )
-
-
+        )"""
+         
         if self.render_mode == "human":
         # Blit copie le contenu sur la fenêtre
         # Pump gère les évènements internes
@@ -397,12 +398,6 @@ class BioSim(ParallelEnv):
             return np.transpose(
             np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
         )
-        while True:
- 
-        # Watch for keyboard and mouse events.
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.close()
 
 
                     
@@ -412,3 +407,4 @@ class BioSim(ParallelEnv):
             pygame.quit()
             self.window = None
         self.clock = None
+
