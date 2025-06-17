@@ -55,15 +55,20 @@ class Gene :
         self.sinkNum: int = 0 #Index de la cible (où va l'output)
         self.weight: int = 0 # Poids (int16)
 
+
     def weightAsFloat(self) -> float : 
         #Converti le poids entier en float [-1.0 , 1.0]
         return self.weight / 8192.0 #Même méthode dans BioSim4
     
 
-    def makeRandomWeight() -> int :
+    # On défini au tout début comme un weight comme une plage énorme de donnée pour pouvoir
+    # mieux faire muter les poids. Quand on l'applique au feedforward on le met en float.
+    @staticmethod
+    def makeRandomWeight() -> float :
         #Poid aléatoire (comme dans BioSim4)
         return np.random.randint(-32768, 32767) # int16 signé
 
+    @staticmethod
     def make_random_gene() -> "Gene" :
         #crée un gène (comme dans BioSim4)
         gene = Gene()
@@ -80,7 +85,8 @@ class Gene :
         length = 16
         return [Gene.make_random_gene() for _ in range(length)]
     
-    #Gestion de l'aléatoire dans le génome des individus
+    # On change avec une chance de 20% à chaque fois de changer par un bit l'information d'un individu.
+    # Cette méthode marche très bien en C++, qui a un controle sur tout les bits.
     @staticmethod
     def random_bit_flip(gene : "Gene") -> "Gene" :
         chance = np.random.rand()
