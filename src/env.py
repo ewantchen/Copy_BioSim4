@@ -15,6 +15,7 @@ import numpy as np
 
 import pygame
 import hashlib
+import params
 
 class BioSim(ParallelEnv):
     metadata = {
@@ -219,6 +220,7 @@ class BioSim(ParallelEnv):
 
  
             # On update les positions des agents comme des variables pour les utiliser après.
+            # current_x, current_y = agent.position
             current_x, current_y = self.agent_position[agent]
             new_x = current_x + movement_offset[0]
             new_y = current_y + movement_offset[1]
@@ -283,14 +285,14 @@ class BioSim(ParallelEnv):
             return 0
 
         value = (
-            (len(genome) % 2) # taille du génome modulo 2 en tant que 1er bit
-            | ((genome[0].sourceType % 2) << 1) # on décale le bit d'après
-            | ((genome[-1].sourceType % 2) << 2) # le >> signifie qu'on le place à la suite 
-            | ((genome[0].sinkType % 2) << 3)#d'un nombre n
-            | ((genome[-1].sinkType % 2) << 4)
-            | ((genome[0].sourceNum % 2) << 5)
-            | ((genome[0].sinkNum % 2) << 6)
-            | ((genome[-1].sourceNum % 2) << 7)
+                (len(genome) % 2)  # taille du génome modulo 2 en tant que 1er bit
+                | ((genome[0].sourceType % 2) << 1)  # on décale le bit d'après
+                | ((genome[-1].sourceType % 2) << 2)  # le >> signifie qu'on le place à la suite
+                | ((genome[0].targetType % 2) << 3)  #d'un nombre n
+                | ((genome[-1].targetType % 2) << 4)
+                | ((genome[0].sourceNum % 2) << 5)
+                | ((genome[0].targetNum % 2) << 6)
+                | ((genome[-1].sourceNum % 2) << 7)
     )
         return value
     

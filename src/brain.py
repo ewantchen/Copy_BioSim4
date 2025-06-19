@@ -51,8 +51,8 @@ class Gene :
     def __init__(self):
         self.sourceType: int = 0 #0=NEURON, 1=SENSOR
         self.sourceNum: int = 0 # Index de la source (d'où vient l'input)
-        self.sinkType: int = 0 #0=NEURON, 1=ACTION
-        self.sinkNum: int = 0 #Index de la cible (où va l'output)
+        self.targetType: int = 0 #0=NEURON, 1=ACTION
+        self.targetNum: int = 0 #Index de la cible (où va l'output)
         self.weight: int = 0 # Poids (int16)
 
 
@@ -63,8 +63,11 @@ class Gene :
 
     # On défini au tout début comme un weight comme une plage énorme de donnée pour pouvoir
     # mieux faire muter les poids. Quand on l'applique au feedforward on le met en float.
+
+    # ATTENTION uniformiser le nom des méthodes makeRandomWeight -> make_random_weight
+
     @staticmethod
-    def makeRandomWeight() -> float :
+    def make_random_weight() -> float :
         #Poid aléatoire (comme dans BioSim4)
         return np.random.randint(-32768, 32767) # int16 signé
 
@@ -74,9 +77,9 @@ class Gene :
         gene = Gene()
         gene.sourceType = np.random.randint(0,2) # 0=NEURON, 1=SENSOR
         gene.sourceNum = np.random.randint(0, 0x7FFF) # 15 bits (comme BioSim)
-        gene.sinkType = np.random.randint(0,2) # 0=NEURON, 1=ACTION
-        gene.sinkNum = np.random.randint(0,0x7FFF) #15 bits
-        gene.weight = Gene.makeRandomWeight()
+        gene.targetType = np.random.randint(0, 2) # 0=NEURON, 1=ACTION
+        gene.targetNum = np.random.randint(0, 0x7FFF) # 15 bits
+        gene.weight = Gene.make_random_weight()
         return gene
     
     @staticmethod
@@ -93,11 +96,11 @@ class Gene :
         if chance < 0.2 :
             gene.sourceType ^= 1 #Flip entre 0 et 1 
         elif chance < 0.4 : 
-            gene.sinkType ^= 1 
+            gene.targetType ^= 1
         elif chance < 0.6 :
             gene.sourceNum ^= (1 << np.random.randint(0,15)) 
         elif chance < 0.8 : 
-            gene.sinkNum ^= (1 << random.randint(0,n_ACTIONS))
+            gene.targetNum ^= (1 << random.randint(0, n_ACTIONS))
         else :
             gene.weight ^= (1 << np.random.randint(0,15))
         return gene
@@ -132,7 +135,7 @@ class Node :
 """Conversion du génome en réseau neuronal"""
 class Neuron :
     # La classe neuron permet de représenter un neurone dans le réseau neuronal d'un agent.
-    # Elle gére les signeaux entrants et sortants. On y initialise des valeurs arbitraire 
+    # Elle gère les signeaux entrants et sortants. On y initialise des valeurs arbitraire
     # destinées à changer. 
     def __init__(self):
         self.output : float = 0.5 # Représente la valeur de sortie des neurones
@@ -165,7 +168,7 @@ class NeuralNet :
 
     # Cette fonction permet de trouver le résultat du calcul du réseau de neurones
     # Pour ce faire, on initialise des variables. Ensuite, on regarde dans chaque connexions :
-    # - Si la destination est une action (sinkType == 1) et qu'on n’a pas encore calculé
+    # - Si la destination est une action (targetType == 1) et qu'on n’a pas encore calculé
     # les sorties des neurones, on applique la fonction tanh() sur tous les neurones "driven",
     # pour obtenir leurs outputs dans l'intervalle [-1.0, 1.0],
     # - si la source est un sensor, alors l'input value du neurone est égal à l'output des sensor
@@ -180,7 +183,7 @@ class NeuralNet :
         sensor_vals = self._get_sensor_values(agent_position, world_size) # On récupère les valeurs des sensors dès le début.
         for gene in self.connections :
             # Cette condition est utilisé à la fin du code.
-            if gene.sinkType == 1 and neuronOutputsComputed == False :
+            if gene.targetType == 1 and neuronOutputsComputed == False :
                 for i, neuron in enumerate(self.neurons) :
                     if neuron.driven == True :
                         neuron.output = np.tanh(neuronAccumulators[i])
@@ -192,10 +195,10 @@ class NeuralNet :
             else :
                 inputVal = self.neurons[gene.sourceNum].output
             
-            if gene.sinkType == 1 :
-                actionLevels[gene.sinkNum] += inputVal * gene.weightAsFloat()
+            if gene.targetType == 1 :
+                actionLevels[gene.targetNum] += inputVal * gene.weightAsFloat()
             else :
-                neuronAccumulators[gene.sinkNum] += inputVal * gene.weightAsFloat()
+                neuronAccumulators[gene.targetNum] += inputVal * gene.weightAsFloat()
         
         # Retourne actionLevels, représentant les niveau d'activation brute des agents
         return actionLevels
@@ -214,15 +217,15 @@ class NeuralNet :
             # On initialise une liste. On prend toutes les connexions et on ajoute 
             # l'index de leurs cibles et leurs sources. Si c'est un sensor ou 
             # une action, alors l'index dépend de la liste d'actions/sensors
-            # tandis que l'index du neurones interne dépend du nombres de neurones 
+            # tandis que l'index du neurone interne dépend du nombre de neurones
             # max
             net.connections = []
             # On ajoute les gene du génome dans NeuralNet, dans net.connections
             for gene in genome : 
-                if gene.sinkType == 0 :
-                    gene.sinkNum %= 0x7FFF
+                if gene.targetType == 0 :
+                    gene.targetNum %= 0x7FFF
                 else :
-                    gene.sinkNum %= n_ACTIONS
+                    gene.targetNum %= n_ACTIONS
 
                 if gene.sourceType == 0 :
                     gene.sourceNum %= 0x7FFF
@@ -241,15 +244,15 @@ class NeuralNet :
             # pour le neural net.
             node_map : dict[int, Node] = {}
             for gene in net.connections : 
-                if gene.sinkType == 0 : 
-                    if gene.sinkNum not in node_map and gene.sinkNum < 0x7FFF :
-                        node_map[gene.sinkNum] = Node()
+                if gene.targetType == 0 :
+                    if gene.targetNum not in node_map and gene.targetNum < 0x7FFF :
+                        node_map[gene.targetNum] = Node()
 
                     # On ajoute aussi aux variables les infos qu'on a.
-                    if gene.sourceType == 0 and gene.sourceNum == gene.sinkNum :
-                        node_map[gene.sinkNum].numSelfInputs += 1
+                    if gene.sourceType == 0 and gene.sourceNum == gene.targetNum :
+                        node_map[gene.targetNum].numSelfInputs += 1
                     else : 
-                        node_map[gene.sinkNum].numOtherInputs += 1
+                        node_map[gene.targetNum].numOtherInputs += 1
 
                 if gene.sourceType == 0 : 
                     if gene.sourceNum not in node_map and gene.sourceNum < 0x7FFF :
@@ -278,12 +281,12 @@ class NeuralNet :
                         removed_connections = 0
                         while i < len(net.connections):
                             gene = net.connections[i]
-                            if (gene.sinkType == 0 and gene.sinkNum == neuron) or (gene.sourceType == 0 and gene.sourceNum == neuron):
+                            if (gene.targetType == 0 and gene.targetNum == neuron) or (gene.sourceType == 0 and gene.sourceNum == neuron):
                                 # Si la connexion supprime la sortie d'un autre neurone, décrémente le compteur
                                 if gene.sourceType == 0 and gene.sourceNum in node_map:
                                     node_map[gene.sourceNum].numOutputs -= 1
-                                if gene.sinkType == 0 and gene.sinkNum in node_map:
-                                    node_map[gene.sinkNum].numOtherInputs -= 1
+                                if gene.targetType == 0 and gene.targetNum in node_map:
+                                    node_map[gene.targetNum].numOtherInputs -= 1
                                 net.connections.pop(i)
                                 removed_connections += 1
                             else:
@@ -303,13 +306,13 @@ class NeuralNet :
             # On indexe aussi les connexions selon la position des neurones avec neuron_remap.
             # Ça permet de mieux retrouver nos connexions plus tard.
             for gene in net.connections:
-                if gene.sinkType == 0:
-                    gene.sinkNum = neuron_remap[gene.sinkNum]
+                if gene.targetType == 0:
+                    gene.targetNum = neuron_remap[gene.targetNum]
                 if gene.sourceType == 0:
                     gene.sourceNum = neuron_remap[gene.sourceNum]
             
 
-            # On ajoute tout les neurones à NeuralNet. Ça donne une liste de neurones
+            # On ajoute tous les neurones à NeuralNet. Ça donne une liste de neurones
             # Voir l'objet NeuralNet()
             net.neurons = [Neuron() for _ in range(len(neuron_remap))]
             
