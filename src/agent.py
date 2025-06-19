@@ -1,10 +1,10 @@
 from brain import *
 
 class Agent:
-    # attribut de class
+    # attribut de classe
     occupancy = np.zeros((size,size), dtype=bool)
     id = 0
-    colors =
+    #colors =
 
     def __init__(self):
         self.id = id
