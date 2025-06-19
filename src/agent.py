@@ -3,12 +3,17 @@ from brain import *
 class Agent:
     # attribut de class
     occupancy = np.zeros((size,size), dtype=bool)
+    id = 0
+    colors =
 
     def __init__(self):
-        self.position = 0, 0
+        self.id = id
+        id += 1
+        self.position = self.new_position()
         self.genome = Gene.make_random_genome()
+        # self.neural_net =…
         self.brain = NeuralNet.create_wiring_from_genome(self.genome)
-        self.color =
+        self.color = ""
 
 
     def new_position(self):
@@ -21,3 +26,7 @@ class Agent:
                 self.position = np.array([x, y], dtype=np.int32)
                 self.occupancy[x, y] = True
                 break
+
+
+    def set_color(self, color):
+        self.color = color

@@ -28,7 +28,7 @@ class BioSim(ParallelEnv):
         super().__init__()
         self.n_agents = n_agents
         
-        
+        # self.agents = []
         self.agent_position = {}
         self.position_occupancy = np.zeros((size,size), dtype=bool)
 
@@ -75,9 +75,14 @@ class BioSim(ParallelEnv):
     def reset(self, seed=None, options=None):
         #on prend les agents de la liste
         self.agents = [f"agent_{i}" for i in range(self.n_agents)]
-        #on leur donne une position aléatoire 
-        
+        #on leur donne une position aléatoire
+        # for i in range(self.n_agents)
+        #   agent = Agent()
+        #   agents.append.agent()
+
         self.agent_position = self.new_positions()
+
+
 
         self.agent_genome = {
             agents : Gene.make_random_genome()
@@ -119,22 +124,27 @@ class BioSim(ParallelEnv):
         new_population = []
         new_genome = {}
         #prendre les agents qui on survécu
-        for agents in self.agents :
-            if agents in self.survivors :
+        for agent in self.agents :
+            if agent in self.survivors :
                 #on selection les parents au hasard.
                 #Peut être changé dans le futur pour correspondre
                 #à la géographie
+
                     parent1 = random.choice(self.survivors)
                     parent2 = random.choice(self.survivors)
+                    # parent1_genome = parent1.gennome
                     parent1_genome = self.agent_genome[parent1]
                     parent2_genome = self.agent_genome[parent2]
                    
                     #on prend le genome des parents
                     half_genome2 = len(parent2_genome) // 2
                     half_genome1 = len(parent1_genome)//2
+
+                    # child = Agent()
                     child_genome = parent1_genome[:half_genome1] + parent2_genome[half_genome2:]
 
                     #création du génome des enfants
+                    # child.genome
                     child_genome = Gene.apply_point_mutations(child_genome)
                     child_genome = Gene.random_insert_deletion(child_genome)
                    
