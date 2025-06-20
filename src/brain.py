@@ -1,7 +1,7 @@
 import numpy as np 
 import random
 from typing import List, Dict, Tuple
-
+from params import PARAMS
 
 ACTIONS = [
     "NORTH",
@@ -85,7 +85,7 @@ class Gene :
     @staticmethod
     def make_random_genome(min_len=10, max_len=50) -> "List[Gene]" :
         #Crée un génome aléatoire
-        length = 16
+        length = PARAMS["GENOME_LENGTH"]
         return [Gene.make_random_gene() for _ in range(length)]
     
     # On change avec une chance de 20% à chaque fois de changer par un bit l'information d'un individu.

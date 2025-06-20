@@ -7,6 +7,12 @@ from brain import (
     SENSORS,
     sensor_values
 )
+
+
+from agent import *
+
+from params import PARAMS
+
 import functools
 from gymnasium.spaces import Discrete, MultiDiscrete
 from pettingzoo import ParallelEnv
@@ -15,7 +21,6 @@ import numpy as np
 
 import pygame
 import hashlib
-import params
 
 class BioSim(ParallelEnv):
     metadata = {
@@ -24,15 +29,14 @@ class BioSim(ParallelEnv):
         "render_fps" : 120
     }
 
-    def __init__(self, size = 128, n_agents = 100, max_time = 100, render_mode=None):
+    def __init__(self, size = PARAMS["SIZE"], n_agents = PARAMS["N_AGENTS"], max_time = 100, render_mode=None):
         super().__init__()
         self.n_agents = n_agents
         
-        # self.agents = []
-        self.agent_position = {}
+
         self.position_occupancy = np.zeros((size,size), dtype=bool)
 
-        self.agent_genome = None
+        self.agents = Agent.all_agents
 
         self.timestep = None
         self.max_time = max_time
@@ -56,44 +60,13 @@ class BioSim(ParallelEnv):
         self.survivors = []
         self.dead_agents = []
 
-    def new_positions(self):
-        positions = set()
-        for agents in self.agents :
-             while True :
-                  x, y = np.array([
-                random.randint(0, self.size - 1),
-                random.randint(0, self.size - 1)
-                ])
-                  if not self.position_occupancy[x,y] :
-                       self.agent_position[agents] = np.array([x,y], dtype=np.int32)
-                       self.position_occupancy[x,y] = True
-                       positions.add((x,y))
-                       break
-        return self.agent_position
          
 
     def reset(self, seed=None, options=None):
-        #on prend les agents de la liste
-        self.agents = [f"agent_{i}" for i in range(self.n_agents)]
-        #on leur donne une position aléatoire
-        # for i in range(self.n_agents)
-        #   agent = Agent()
-        #   agents.append.agent()
-
-        self.agent_position = self.new_positions()
-
-
-
-        self.agent_genome = {
-            agents : Gene.make_random_genome()
-            for agents in self.agents
-        }
-        self.agent_brains = {
-            agent: NeuralNet.create_wiring_from_genome(self.agent_genome[agent])
-            for agent in self.agents
-            }
-
-        self.agent_colors = self.get_all_colors()       
+        for i in range(self.n_agents) :
+            agent = Agent() 
+            agent.id = i
+                 
 
         if self.render_mode == "human" :
             self._render_frame()
@@ -101,20 +74,20 @@ class BioSim(ParallelEnv):
         self.timestep = 0
         #pas besoin des observations au début
         observations = {
-            agents : self._get_observation(agents)
-            for agents in self.agents
+            agent : self.get_observation(agent)
+            for agent in self.agents
         }
         return observations
     
     def condition(self):
          #on décrit une condition de séléction selon les besoins. Sera ensuite appelé à la fin 
          # de la simulation
-         for agents in self.agents :
-              x, y = self.agent_position[agents]
+         for agent in self.agents :
+              x, y = agent.position
               if x > self.size // 2:
-                   self.rewards[agents] = 0
+                   self.rewards[agent] = 0
               else : 
-                  self.rewards[agents] = 1
+                  self.rewards[agent] = 1
 
                    
     
@@ -138,7 +111,7 @@ class BioSim(ParallelEnv):
                    
                     #on prend le genome des parents
                     half_genome2 = len(parent2_genome) // 2
-                    half_genome1 = len(parent1_genome)//2
+                    half_genome1 = len(parent1_genome) // 2
 
                     # child = Agent()
                     child_genome = parent1_genome[:half_genome1] + parent2_genome[half_genome2:]
@@ -188,8 +161,8 @@ class BioSim(ParallelEnv):
 
         self.timestep = 0
         observations = {
-            agents : self._get_observation(agents)
-            for agents in self.agents
+            agent : self.get_observation(agent)
+            for agent in self.agents
         }
         return observations
 
@@ -255,14 +228,14 @@ class BioSim(ParallelEnv):
         self.timestep += 1 
         
         observations = {
-            agents : self._get_observation(agents)
-            for agents in self.agents
+            agent : self.get_observation(agent)
+            for agent in self.agents
         }
         return observations, self.rewards, self.termination, self.truncations, infos
     
-    def _get_observation(self, agent):
+    def get_observation(self, agent):
         """Retourne l'observation de l'agent"""
-        x, y = self.agent_position[agent]
+        x, y = agent.position
         sensor_values = self.agent_brains[agent]._get_sensor_values(
             self.agent_position[agent],
             self.size
@@ -282,62 +255,7 @@ class BioSim(ParallelEnv):
     @functools.lru_cache(maxsize=None)
     def action_space(self, agent):
         return Discrete(len(ACTIONS))
-    
 
-    # on transforme la valeur génétique en couleur.
-    # Un gène possède 5 informations : sa source, sa cible et son poid
-    # ici, on prend le premier et le dernier gène et on transforme par 
-    # modulo ces informations en bits. Ensuite, ces bits sont transformés
-    # en couleur rgb. 
-    def make_genetic_color_value(self, genome):
-        # on vérifie s'il y a un génome
-        if not genome:
-            return 0
-
-        value = (
-                (len(genome) % 2)  # taille du génome modulo 2 en tant que 1er bit
-                | ((genome[0].sourceType % 2) << 1)  # on décale le bit d'après
-                | ((genome[-1].sourceType % 2) << 2)  # le >> signifie qu'on le place à la suite
-                | ((genome[0].targetType % 2) << 3)  #d'un nombre n
-                | ((genome[-1].targetType % 2) << 4)
-                | ((genome[0].sourceNum % 2) << 5)
-                | ((genome[0].targetNum % 2) << 6)
-                | ((genome[-1].sourceNum % 2) << 7)
-    )
-        return value
-    
-    #on transforme les valeurs de couleur en couleur rgb
-    # On défini la couleur tel que les valeurs définies par make_genetic_color_value
-    # soient isolés à certains bits. Par exemple, le vert est défini par un isolement des 5 
-    # premiers bits de c et ces valeurs sont ensuites décalés pour donner une 
-    # valeur entre 0 et 255. Le rouge est directement la valeur c
-    def genetic_color_to_rgb(self, c, max_color_val=0xb0, max_luma_val=0xb0):
-        r = c
-        g = (c & 0x1F) << 3
-        b = (c & 0x07) << 5
-
-        # Calculer la luminance (même formule que dans le C++)
-        luma = (r + r + r + b + g + g + g + g) // 8
-
-        # Réduire les valeurs si elles sont trop claires
-        if luma > max_luma_val:
-            if r > max_color_val:
-                r %= max_color_val
-            if g > max_color_val:
-                g %= max_color_val
-            if b > max_color_val:
-                b %= max_color_val
-
-        return (r, g, b)
-    
-    # Récuère toutes les couleurs des agents et les mets dans un dictionnaire
-    def get_all_colors(self):
-        self.agent_colors = {}
-        for agents in self.agents :
-            genome = self.agent_genome[agents]
-            value = self.make_genetic_color_value(genome)
-            self.agent_colors[agents] = self.genetic_color_to_rgb(value)
-        return self.agent_colors
     
 
     def render(self) : 
@@ -345,6 +263,7 @@ class BioSim(ParallelEnv):
             return self._render_frame()
     
     def _render_frame(self) : 
+        agent = Agent()
         # On met une clock pour garder une trace du temps passé
         if self.clock is None and self.render_mode == "human" :
             self.clock = pygame.time.Clock()
@@ -362,8 +281,10 @@ class BioSim(ParallelEnv):
         # Pour chaque agent, on prend son génome, on applique une couleur selon
         # ce génome.
         # On dessine ensuite un cercle selon cette couleur et la position
+
+        """"
         for agent in self.agents :
-            color = self.agent_colors[agent]
+            color = agent.colors
             pygame.draw.circle(
                 canvas,
                 color,
@@ -372,6 +293,8 @@ class BioSim(ParallelEnv):
                 #rayon du cercle
                 pix_square_size / 2,
             )
+        """
+
         """"
         # on prend la taille de la grille + 1, et on y dessine la grille
         for x in range(self.size + 1) :
@@ -420,3 +343,6 @@ class BioSim(ParallelEnv):
             self.window = None
         self.clock = None
 
+self = BioSim()
+self.reset()
+print(self.get_observation)
