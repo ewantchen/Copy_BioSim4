@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 from brain import (
     Neuron,
