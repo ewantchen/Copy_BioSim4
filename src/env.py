@@ -73,10 +73,7 @@ class BioSim(ParallelEnv):
 
         self.timestep = 0
         #pas besoin des observations au début
-        observations = {
-            agent : self.get_observation(agent)
-            for agent in self.agents
-        }
+        observations = Agent.get_observation()
         return observations
     
     def condition(self):
@@ -225,14 +222,10 @@ class BioSim(ParallelEnv):
 
         if self.render_mode == "human" :
             self._render_frame()
-
-
-            
+ 
             
         self.timestep += 1 
         
-
-
 
         return observations, self.rewards, self.termination, self.truncations, infos
     
