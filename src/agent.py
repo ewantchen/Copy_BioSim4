@@ -1,3 +1,5 @@
+import numpy as np
+
 from brain import (
     Neuron,
     Gene,
@@ -8,7 +10,6 @@ from brain import (
 )
 
 from params import PARAMS
-
 
 
 class Agent:
