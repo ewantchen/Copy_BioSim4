@@ -22,7 +22,7 @@ class Agent:
     def __init__(self):
         # On détermine l'inex de l'agent lors de l'iniitialisation de l'environnement.
         self.id : int 
-        self.position : np.ndarray
+        self.position : np.array
         # Les informations propres à l'agents sont sa position, son code génétique,
         # le cerveau qui en découle ainsi que sa couleur. Elles sont toutes déterminés par
         # des fonctions.
