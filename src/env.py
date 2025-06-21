@@ -204,6 +204,7 @@ class BioSim(ParallelEnv):
  
             # On update les positions des agents comme des variables pour les utiliser après.
             # current_x, current_y = agent.position
+            # Mieux : créer une méthode dans agent.py qui met à jour la position en fonction de l'offset
             current_x, current_y = self.agent_position[agent]
             new_x = current_x + movement_offset[0]
             new_y = current_y + movement_offset[1]
@@ -233,6 +234,7 @@ class BioSim(ParallelEnv):
         }
         return observations, self.rewards, self.termination, self.truncations, infos
     
+    # Méthode à déporter dans agent.py
     def get_observation(self, agent):
         """Retourne l'observation de l'agent"""
         x, y = agent.position

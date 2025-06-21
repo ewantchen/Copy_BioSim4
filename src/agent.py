@@ -30,11 +30,14 @@ class Agent:
 
     def new_position(self):
         while True:
+            # Ici, je vous suggère de faire plus simple
             x, y = np.array([
                 random.randint(0, self.size - 1),
                 random.randint(0, self.size - 1)
             ])
             if not self.occupancy[x, y]:
+                # Ici aussi, vous héritez de la lourdeur du code en C
+                # self.position = x, y
                 self.position = np.array([x, y], dtype=np.int32)
                 self.occupancy[x, y] = True
                 break
