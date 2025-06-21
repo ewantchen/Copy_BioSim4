@@ -22,11 +22,11 @@ class Agent:
     def __init__(self):
         # On détermine l'inex de l'agent lors de l'iniitialisation de l'environnement.
         self.id : int 
-
+        self.position : np.ndarray
         # Les informations propres à l'agents sont sa position, son code génétique,
         # le cerveau qui en découle ainsi que sa couleur. Elles sont toutes déterminés par
         # des fonctions.
-        self.position = self.new_position()
+        self.set_position()
         self.genome = Gene.make_random_genome()
         self.brain = NeuralNet.create_wiring_from_genome(self.genome)
         self.color = self.make_genetic_color_value(self.genome)
@@ -42,7 +42,7 @@ class Agent:
     def __repr__(self):
         return f"Agent('{self.id}', '{self.position}', {self.genome}', '{self.brain}', '{self.color}')"
 
-    def new_position(self):
+    def set_position(self):
         while True:
             # Ici, je vous suggère de faire plus simple
             x, y = np.array([
