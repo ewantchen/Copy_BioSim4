@@ -153,7 +153,7 @@ class NeuralNet :
 
     # Cette fonction permet de trouver les valeurs des sensors qui sont dans le réseau 
     # de neurones.
-    def _get_sensor_values(self, agent_position, world_size) -> Dict[int, float]:
+    def get_sensor_values(self, agent_position, world_size) -> Dict[int, float]:
         x, y = tuple(agent_position)[:2]
     
         return {

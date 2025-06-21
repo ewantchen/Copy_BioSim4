@@ -220,34 +220,23 @@ class BioSim(ParallelEnv):
                         self.position_occupancy[new_x, new_y] = True
                         self.agent_position[agent] = [new_x, new_y]
 
-            if self.render_mode == "human" :
-                self._render_frame()
+            observations = Agent.get_observation()
+
+
+        if self.render_mode == "human" :
+            self._render_frame()
 
 
             
             
         self.timestep += 1 
         
-        observations = {
-            agent : self.get_observation(agent)
-            for agent in self.agents
-        }
+
+
+
         return observations, self.rewards, self.termination, self.truncations, infos
     
-    # Méthode à déporter dans agent.py
-    def get_observation(self, agent):
-        """Retourne l'observation de l'agent"""
-        x, y = agent.position
-        sensor_values = self.agent_brains[agent]._get_sensor_values(
-            self.agent_position[agent],
-            self.size
-        )
-        observation = {
-        'position': [x, y],
-        'sensors': sensor_values,
-        'neurons': [neuron.output for neuron in self.agent_brains[agent].neurons]
-    }
-        return observation
+
 
     
     @functools.lru_cache(maxsize=None)

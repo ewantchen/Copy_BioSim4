@@ -92,4 +92,18 @@ class Agent:
 
         return (r, g, b)
     
+        # Méthode à déporter dans agent.py
+    def get_observation(self):
+        """Retourne l'observation de l'agent"""
+        sensor_values = NeuralNet.get_sensor_values(
+            self.position,
+            self.size
+        )
+        observation = {
+        'position': self.position,
+        'sensors': sensor_values,
+        'output': NeuralNet.feed_forward(self.position, Agent.size)
+    }
+        return observation
+    
 
