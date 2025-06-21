@@ -180,7 +180,8 @@ class BioSim(ParallelEnv):
         self.truncations = {agents : False for agents in self.agents}
         infos = {agents : {} for agents in self.agents}
 
-        for agent in self.agents : 
+        for agent in self.agents :
+            # Ici aussi, il vaut mieux une méthode update_and_move dans agent.py
             x, y = self.agent_position[agent]
             movex = 0.0
             movey = 0.0

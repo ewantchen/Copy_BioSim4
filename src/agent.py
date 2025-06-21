@@ -1,4 +1,12 @@
-from brain import *
+from brain import (
+    Neuron,
+    Gene,
+    NeuralNet,
+    ACTIONS,
+    SENSORS,
+    sensor_values
+)
+
 from params import PARAMS
 
 
@@ -20,10 +28,14 @@ class Agent:
         self.genome = Gene.make_random_genome()
         self.brain = NeuralNet.create_wiring_from_genome(self.genome)
         self.color = self.make_genetic_color_value(self.genome)
-
+        self.get_observation()
 
         # On ajoute à une liste tout les agents à chaque fois qu'ils sont initialisés
         Agent.all_agents.append(self)
+
+        # Fonction qui permet de transformer une action en probabilité
+    def Prob2Bool(self, factor: float) -> bool:
+        return random.random() < factor
 
     def __repr__(self):
         return f"Agent('{self.id}', '{self.position}', {self.genome}', '{self.brain}', '{self.color}')"
@@ -36,12 +48,57 @@ class Agent:
                 random.randint(0, self.size - 1)
             ])
             if not self.occupancy[x, y]:
-                # Ici aussi, vous héritez de la lourdeur du code en C
-                # self.position = x, y
                 self.position = np.array([x, y], dtype=np.int32)
                 self.occupancy[x, y] = True
                 break
 
+    def update_and_move(self):
+        x, y = self.position
+        movex = 0.0
+        movey = 0.0
+        actionLevels = self.brain.feed_forward((x, y), self.size)
+        movex += actionLevels[2]
+        movex -= actionLevels[3]
+        movey += actionLevels[0]
+        movey -= actionLevels[1]
+
+        movex = np.tanh(movex)
+        movey = np.tanh(movey)
+
+        probX = 1 if self.Prob2Bool(abs(movex)) else 0
+        probY = 1 if self.Prob2Bool(abs(movey)) else 0
+
+        signX = -1 if movex < 0.0 else 1
+        signY = -1 if movey < 0.0 else 1
+
+        offset = int(probX * signX), int(probY * signY)
+
+        current_x, current_y = self.position
+        new_x = current_x + offset[0]
+        new_y = current_y + offset[1]
+
+        # ici on vérifie que les nouvelles positions respectent les bordures et la position
+        # des autres entités. On change les états de l'ancienne et de la nouvelle position à
+        # des états représentatifs du changement.
+        if (new_x, new_y) != (current_x, current_y):
+            if 0 <= new_x < self.size and 0 <= new_y < self.size:
+                if not self.occupancy[new_x, new_y]:
+                    self.occupancy[current_x, current_y] = False
+                    self.occupancy[new_x, new_y] = True
+                    self.position = np.array([new_x, new_y], dtype=np.int32)
+
+    def get_observation(self):
+        """Retourne l'observation de l'agent"""
+        x, y = self.position
+        sensor_values = self.brain._get_sensor_values(
+            self.position,
+            self.size
+        )
+        self.observation = {
+            'position': [x, y],
+            'sensors': sensor_values,
+            'neurons': [neuron.output for neuron in self.brain.neurons]
+        }
 
 
     # on transforme la valeur génétique en couleur.
