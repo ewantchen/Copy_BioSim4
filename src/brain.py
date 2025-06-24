@@ -8,7 +8,6 @@ ACTIONS = [
     "SOUTH",
     "EAST",
     "WEST",
-    "STAY",
 ]
 
 n_ACTIONS = len(ACTIONS)
@@ -153,8 +152,8 @@ class NeuralNet :
 
     # Cette fonction permet de trouver les valeurs des sensors qui sont dans le réseau 
     # de neurones.
-    def _get_sensor_values(self, agent_position, world_size) -> Dict[int, float]:
-        x, y = tuple(agent_position)[:2]
+    def get_sensor_values(self, agent_position, world_size) -> Dict[int, float]:
+        x, y = agent_position
     
         return {
                 0: sensor_values["X_POS"](x, world_size),
@@ -177,10 +176,13 @@ class NeuralNet :
     # - si la cible est une action, alors on ajoute l'output du neurone à actionLevels, sinon on l'ajoute
     # à neuronAccumulators.
     def feed_forward(self, agent_position, world_size) :
+        
         actionLevels = [0.0] * n_ACTIONS  # Tableau pour dire quelle valeurs sont les plus fortes.
         neuronAccumulators = [0.0] * len(self.neurons) # Tableau pour trier les outputs de chaque neurones.
+        
         neuronOutputsComputed = False # Permet de calculer la valeur de tout les neurones internes avant.
-        sensor_vals = self._get_sensor_values(agent_position, world_size) # On récupère les valeurs des sensors dès le début.
+        sensor_vals = self.get_sensor_values(agent_position, world_size) # On récupère les valeurs des sensors dès le début.
+        
         for gene in self.connections :
             # Cette condition est utilisé à la fin du code.
             if gene.targetType == 1 and neuronOutputsComputed == False :

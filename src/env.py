@@ -29,8 +29,7 @@ class BioSim(ParallelEnv):
         "render_fps" : 120
     }
 
-    def __init__(self, size = PARAMS["SIZE"], n_agents = PARAMS["N_AGENTS"], max_time = 100, render_mode=None):
-        super().__init__()
+    def __init__(self, size = PARAMS["SIZE"], n_agents = PARAMS["N_AGENTS"], max_time = PARAMS["MAX_TIME"], render_mode=None):
         self.n_agents = n_agents
         
 
@@ -69,7 +68,7 @@ class BioSim(ParallelEnv):
                  
 
         if self.render_mode == "human" :
-            self._render_frame()
+            self.render_frame()
 
         self.timestep = 0
         #pas besoin des observations au début
@@ -222,11 +221,8 @@ class BioSim(ParallelEnv):
                         self.agent_position[agent] = [new_x, new_y]
 
             if self.render_mode == "human" :
-                self._render_frame()
+                self.render_frame()
 
-
-            
-            
         self.timestep += 1 
         
         observations = {
@@ -234,21 +230,6 @@ class BioSim(ParallelEnv):
             for agent in self.agents
         }
         return observations, self.rewards, self.termination, self.truncations, infos
-    
-    # Méthode à déporter dans agent.py
-    def get_observation(self, agent):
-        """Retourne l'observation de l'agent"""
-        x, y = agent.position
-        sensor_values = self.agent_brains[agent]._get_sensor_values(
-            self.agent_position[agent],
-            self.size
-        )
-        observation = {
-        'position': [x, y],
-        'sensors': sensor_values,
-        'neurons': [neuron.output for neuron in self.agent_brains[agent].neurons]
-    }
-        return observation
 
     
     @functools.lru_cache(maxsize=None)
@@ -263,9 +244,9 @@ class BioSim(ParallelEnv):
 
     def render(self) : 
         if self.render_mode == "rgb_array":
-            return self._render_frame()
+            return self.render_frame()
     
-    def _render_frame(self) : 
+    def render_frame(self) : 
         agent = Agent()
         # On met une clock pour garder une trace du temps passé
         if self.clock is None and self.render_mode == "human" :
@@ -348,4 +329,4 @@ class BioSim(ParallelEnv):
 
 self = BioSim()
 self.reset()
-print(self.get_observation)
+print(self.agents)

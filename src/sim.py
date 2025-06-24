@@ -1,11 +1,13 @@
-from env import BioSim
+from env_goal import BioSim
 import time
 import pygame
+
+from params import PARAMS
 
 # param_env1 = Params(size = 128, n_agents = 21, max_time= 100, render_mode = "human")
 # env1 = BioSim(param_env1)
 
-env = BioSim(size = 128, n_agents = 21, max_time= 100, render_mode = "human")
+env = BioSim(size=PARAMS["SIZE"], n_agents=PARAMS["N_AGENTS"], max_time=100, render_mode="human")
 observations = env.reset()
 running = True
 generation = 0

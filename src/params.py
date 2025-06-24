@@ -2,9 +2,10 @@
 # dans le code les valeurs à changer.
 
 PARAMS = {
-    "SIZE" : 128,
+    "SIZE" : 40,
     "FPS"  : 0,
-    "N_AGENTS" : 1,
+    "MAX_TIME" : 100,
+    "N_AGENTS" : 100,
     "GENOME_LENGTH" : 1
 }
 

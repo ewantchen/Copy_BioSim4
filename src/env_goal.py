@@ -38,7 +38,7 @@ class BioSim(ParallelEnv):
 
         self.position_occupancy = np.zeros((size, size), dtype=bool)
 
-        self.agents = Agent.all_agents
+        self.agents = []
 
         self.timestep = None
         self.max_time = max_time
@@ -47,6 +47,7 @@ class BioSim(ParallelEnv):
         self.window = None
         self.window_size = 512
         self.clock = None
+
 
         if render_mode == "human":
             pygame.init()
@@ -58,6 +59,7 @@ class BioSim(ParallelEnv):
                 pygame.RESIZABLE,
             )
 
+
         self.size = size
         self.survivors = []
         self.dead_agents = []
@@ -65,18 +67,24 @@ class BioSim(ParallelEnv):
     def reset(self, seed=None, options=None):
         for i in range(self.n_agents):
             agent = Agent()
-            agent.id = i
+
+        self.agents = agent.all_agents
+
 
         if self.render_mode == "human":
-            self._render_frame()
+            self.render_frame()
 
         self.timestep = 0
+
+
         # pas besoin des observations au début
         observations = {
-            agent.get_observation()
+            Agent.get_observation(agent)
             for agent in self.agents
         }
+
         return observations
+
 
     def condition(self):
         # on décrit une condition de séléction selon les besoins. Sera ensuite appelé à la fin
@@ -84,90 +92,127 @@ class BioSim(ParallelEnv):
         for agent in self.agents:
             x, y = agent.position
             if x > self.size // 2:
-                self.rewards[agent] = 0
+                agent.alive = False
             else:
-                self.rewards[agent] = 1
+                agent.alive = True
 
-    def selection(self):
-        self.survivors = [agent for agent in self.survivors
-                          # condition à revoir
-                          if agent in agent.genome]
-        new_population = []
-        new_genome = {}
-        # prendre les agents qui on survécu
-        for agent in self.agents:
-            if agent in self.survivors:
-                # on selection les parents au hasard.
-                # Peut être changé dans le futur pour correspondre
-                # à la géographie
 
-                parent1 = random.choice(self.survivors)
-                parent2 = random.choice(self.survivors)
-                # parent1_genome = parent1.gennome
-                parent1_genome = agent.genome[parent1]
-                parent2_genome = agent.genome[parent2]
+    def create_genetic_offsprings(self):
+        for agent in self.survivors:
+            # on selection les parents au hasard.
+            # Peut être changé dans le futur pour correspondre
+            # à la géographie
 
-                # on prend le genome des parents
-                half_genome2 = len(parent2_genome) // 2
-                half_genome1 = len(parent1_genome) // 2
+            parent1 = random.choice(self.survivors)
+            parent2 = random.choice(self.survivors)
 
-                # child = Agent()
-                child_genome = parent1_genome[:half_genome1] + parent2_genome[half_genome2:]
 
-                # création du génome des enfants
-                # child.genome
-                child_genome = Gene.apply_point_mutations(child_genome)
-                child_genome = Gene.random_insert_deletion(child_genome)
+            # On reprend la logique de bioSim4 pour faire une transmission similaire aux allèles. 
+            # On fait en sorte que le génome soit celui de l'un des deux parents, et qu'une partie soit 
+            # celle de l'autre parent. 
 
-                new_agent_name = f"agent_{len(new_population)}"
-                new_population.append(new_agent_name)
-                new_genome[new_agent_name] = child_genome
 
-        # on redifini les agents
+            g1 = parent1.genome
+            g2 = parent2.genome
 
-        self.agents = new_population
-        agent.genome = new_genome
-        agent.brain = {
-            agent: NeuralNet.create_wiring_from_genome(agent.genome)
-            for agent in self.agents
-        }
-        agent.colors = agent.get_all_colors()
 
-        # on recrée la position de la nouvelle popoulation
-        agent.position = agent.new_positions()
+            # On prend le génome le plus court des deux parents. Il fera office de génome de référence.
+            child_genome = g1 if len(g1) >= len(g2) else g2
+            gShorter = g2 if len(g1) >= len(g2) else g1
 
-    # fonction à appeller lors de la fin d'une simulation, et préparation de la prochaine
+            # Dans le génome le plus court, on prend un espace, défini aléatoirement,
+            # qui remplacera la partie du gène qu'elle couvre par l'espace. On s'assure aussi
+            # que les indexs font sens en terme de taille. Par exemple :
+            # genome = [A, A, A, A, A, A, A, A, A, A] gShorter = [B, B, B, B, B, B, B]
+            #index0 = 2
+            #index1 = 5
+            #On prend dans gShorter la tranche de l'indice 2 (inclus) à 5 
+            # exclu) → éléments 2, 3, 4 → [B, B, B]
+            #On copie cette tranche dans genome à partir de l'indice 2
+            #Après la copie, genome devient :
+            #[A, A, B, B, B, A, A, A, A, A]
+            size = len(gShorter)
+            index0 = random.randint(0, size - 1)
+            index1 = random.randint(0, size) 
+            if index0 > index1:
+                index0, index1 = index1, index0
+
+            # Notre génome est remplacé dans l'espace entre les indexs
+            child_genome[index0:index1] = gShorter[index0:index1]
+
+            # Ici, on fait en sorte que le génome fasse la taille moyenne du génome des parents.
+            # On ajoute 1 si la longueur des 2 génomes additionnés est impair.
+            total = len(g1) + len(g2)
+            if total % 2 == 1 and random.randint(0, 1) == 1:
+                total += 1
+            new_length = total // 2
+
+            # Si le génome est trop long, on coupe aléatoirement soit le bout du début,
+            # soit de la fin.
+            if len(child_genome) > new_length :
+                to_trim = len(child_genome) - new_length
+                if random.random() < 0.5:
+                    child_genome = child_genome[to_trim:]
+                else:
+                    # trim from back
+                    child_genome = child_genome[:-to_trim]
+
+
+            child_genome = Gene.apply_point_mutations(child_genome)
+            child_genome = Gene.random_insert_deletion(child_genome)      
+
+            return child_genome
+
+        if None in self.survivors :
+            raise ValueError(f"No survivors")
+        else : 
+            raise ValueError("other")
+        
+  
+
+   
+# Fonction permettant de créer la prochaine génération avec la fonction de création de offsprings.
+    def new_population(self):
+        for i in range(self.n_agents):
+            agent = Agent()
+            agent.genome = self.create_genetic_offsprings()
+            agent.brain = NeuralNet.create_wiring_from_genome(agent.genome)
+            agent.color = Agent.make_genetic_color_value(agent.genome)
+
+
+    # fonction à appeller lors de la fin d'une simulation, et préparation de la prochaine,
+    # similaire à Reset()
     def end_of_sim(self):
 
         self.condition()
 
         for agent in self.agents:
-            if self.rewards[agent] == 0:
-                self.termination[agent] = True
-                self.truncations[agent] = True
+            if agent.alive == False :
                 self.dead_agents.append(agent)
-            elif self.rewards[agent] == 1:
+            elif agent.alive == True:
                 self.survivors.append(agent)
+
         for dead in self.dead_agents:
             self.agents.remove(dead)
-            del dead.position
-            del dead.genome
-            del dead.brains
-            dead.clear()
-        self.selection()
+            self.dead_agents = []
+
+        self.create_genetic_offsprings()
+        self.new_population()
 
         self.timestep = 0
         observations = {
-            agent.get_observation(agent)
+            agent.get_observation()
             for agent in self.agents
         }
         return observations
 
-    def step(self, actions):
+    def step(self, action):
         # On initialise les informations à chaque step pour ensuite utiliser ces informations
         # et les envoyer au prochain step. Rewards permet de sélectionner à la fin d'une sim.
         # Termination et truncations permettent d'éliminer tout les agents non sélectionnés.
-        # Infos est une conditions necéssaire pour PettingZoo.
+        # Infos est une condition necéssaire pour PettingZoo.
+        # Rewards pourra être utiliser plus tard pour faire un score de fitness pour 
+        # choisir mieux les parents.
         self.rewards = {agent: 0 for agent in self.agents}
         self.termination = {agent: False for agent in self.agents}
         self.truncations = {agent: False for agent in self.agents}
@@ -175,6 +220,20 @@ class BioSim(ParallelEnv):
 
         for agent in self.agents:
             agent.update_and_move()
+
+        if self.render_mode == "human" :
+            self.render_frame()
+
+
+        observations = {
+            agent.get_observation()
+            for agent in self.agents
+        }
+
+    
+
+        return observations, self.rewards, self.termination, self.truncations, infos
+    
 
     @functools.lru_cache(maxsize=None)
     def observation_space(self, agent):
@@ -186,9 +245,9 @@ class BioSim(ParallelEnv):
 
     def render(self):
         if self.render_mode == "rgb_array":
-            return self._render_frame()
+            return self.render_frame()
 
-    def _render_frame(self):
+    def render_frame(self):
         agent = Agent()
         # On met une clock pour garder une trace du temps passé
         if self.clock is None and self.render_mode == "human":
@@ -269,4 +328,6 @@ class BioSim(ParallelEnv):
 
 self = BioSim()
 self.reset()
-print(self.get_observation)
+self.end_of_sim()
+
+

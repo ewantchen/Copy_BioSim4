@@ -14,30 +14,28 @@ from params import PARAMS
 
 
 class Agent:
-    size = PARAMS["SIZE"]
+    world_size = PARAMS["SIZE"]
     # attribut de classe. Permet d'avoir une propriété commune à tous les agents.
-    occupancy = np.zeros((size,size), dtype=bool)
+    occupancy = np.zeros((world_size,world_size), dtype=bool)
     all_agents = []
 
     def __init__(self):
         # On détermine l'inex de l'agent lors de l'iniitialisation de l'environnement.
-        self.id : int 
-        self.position : np.array
+        self.id = len(Agent.all_agents) 
+        
         # Les informations propres à l'agents sont sa position, son code génétique,
         # le cerveau qui en découle ainsi que sa couleur. Elles sont toutes déterminés par
         # des fonctions.
-        self.set_position()
+        self.alive = True
+        self.position = self.set_position()
         self.genome = Gene.make_random_genome()
         self.brain = NeuralNet.create_wiring_from_genome(self.genome)
         self.color = self.make_genetic_color_value(self.genome)
-        self.get_observation()
 
         # On ajoute à une liste tout les agents à chaque fois qu'ils sont initialisés
-        Agent.all_agents.append(self)
+        self.all_agents.append(self)
 
-        # Fonction qui permet de transformer une action en probabilité
-    def Prob2Bool(self, factor: float) -> bool:
-        return random.random() < factor
+
 
     def __repr__(self):
         return f"Agent('{self.id}', '{self.position}', {self.genome}', '{self.brain}', '{self.color}')"
@@ -45,24 +43,34 @@ class Agent:
     def set_position(self):
         while True:
             # Ici, je vous suggère de faire plus simple
-            x, y = np.array([
-                random.randint(0, self.size - 1),
-                random.randint(0, self.size - 1)
-            ])
+            x, y = random.randint(0, self.world_size - 1), random.randint(0, self.world_size - 1)
+
             if not self.occupancy[x, y]:
-                self.position = np.array([x, y], dtype=np.int32)
+                self.position = x, y
                 self.occupancy[x, y] = True
                 break
+        return self.position
+
+
+        # Fonction qui permet de transformer une action en probabilité
+    def Prob2Bool(self, factor: float) -> bool:
+        return random.random() < factor
+    
+
 
     def update_and_move(self):
+        # On ajoute les valeurs absolues des valeurs des mouvements dans actionLevels, et on les multiplie
+        # ensuite par leurs signes, ce qui donne deux chiffres que l'on applique à la position pour déplacer
+        # les agents. 
         x, y = self.position
         movex = 0.0
         movey = 0.0
-        actionLevels = self.brain.feed_forward((x, y), self.size)
+        actionLevels = self.brain.feed_forward((x, y), self.world_size)
         movex += actionLevels[2]
         movex -= actionLevels[3]
         movey += actionLevels[0]
         movey -= actionLevels[1]
+ 
 
         movex = np.tanh(movex)
         movey = np.tanh(movey)
@@ -83,23 +91,22 @@ class Agent:
         # des autres entités. On change les états de l'ancienne et de la nouvelle position à
         # des états représentatifs du changement.
         if (new_x, new_y) != (current_x, current_y):
-            if 0 <= new_x < self.size and 0 <= new_y < self.size:
+            if 0 <= new_x < self.world_size and 0 <= new_y < self.world_size:
                 if not self.occupancy[new_x, new_y]:
                     self.occupancy[current_x, current_y] = False
                     self.occupancy[new_x, new_y] = True
                     self.position = np.array([new_x, new_y], dtype=np.int32)
 
+
     def get_observation(self):
         """Retourne l'observation de l'agent"""
-        x, y = self.position
-        sensor_values = self.brain._get_sensor_values(
-            self.position,
-            self.size
-        )
+
+        sensor_values = self.brain.get_sensor_values(self.position, self.world_size)
         self.observation = {
-            'position': [x, y],
+            'position': self.position,
             'sensors': sensor_values,
-            'neurons': [neuron.output for neuron in self.brain.neurons]
+            # Ajouter un output pour les observations pour les réutiliser lors de la méthode
+            # rgb
         }
 
 
@@ -108,7 +115,8 @@ class Agent:
     # ici, on prend le premier et le dernier gène et on transforme par 
     # modulo ces informations en bits. Ensuite, ces bits sont transformés
     # en couleur rgb. 
-    def make_genetic_color_value(self, genome):
+    @staticmethod
+    def make_genetic_color_value(genome):
         # on vérifie s'il y a un génome
         if not genome:
             return 0
@@ -151,4 +159,5 @@ class Agent:
 
         return (r, g, b)
     
-
+agent = Agent()
+print(agent.position)
