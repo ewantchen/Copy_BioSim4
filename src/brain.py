@@ -256,6 +256,7 @@ class NeuralNet :
                     else : 
                         node_map[gene.targetNum].numOtherInputs += 1
 
+
                 if gene.sourceType == 0 : 
                     if gene.sourceNum not in node_map and gene.sourceNum < 0x7FFF :
                         node_map[gene.sourceNum] = Node()

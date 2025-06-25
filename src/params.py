@@ -2,11 +2,12 @@
 # dans le code les valeurs à changer.
 
 PARAMS = {
-    "SIZE" : 40,
-    "FPS"  : 0,
+    "SIZE" : 128,
+    "FPS"  : 12000,
     "MAX_TIME" : 100,
     "N_AGENTS" : 100,
-    "GENOME_LENGTH" : 1
+    "GENOME_LENGTH" : 10,
+    "SEXUAL_REPRODUCTION" : True
 }
 
 def condition(self):

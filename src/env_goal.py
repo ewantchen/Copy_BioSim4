@@ -29,14 +29,14 @@ class BioSim(ParallelEnv):
     metadata = {
         "name": "BioSim",
         "render_modes": ["human", "rgb_array"],
-        "render_fps": 120
+        "render_fps": PARAMS["FPS"]
     }
 
     def __init__(self, size=PARAMS["SIZE"], n_agents=PARAMS["N_AGENTS"], max_time=100, render_mode=None):
-        super().__init__()
         self.n_agents = n_agents
 
         self.position_occupancy = np.zeros((size, size), dtype=bool)
+
 
         self.agents = []
 
@@ -65,14 +65,17 @@ class BioSim(ParallelEnv):
         self.dead_agents = []
 
     def reset(self, seed=None, options=None):
-        for i in range(self.n_agents):
+        Agent.all_agents = []
+
+        """
+        if self.render_mode == "human":
+            self.render_frame()
+        """
+
+        for i in range(self.n_agents-1):
             agent = Agent()
 
         self.agents = agent.all_agents
-
-
-        if self.render_mode == "human":
-            self.render_frame()
 
         self.timestep = 0
 
@@ -115,53 +118,58 @@ class BioSim(ParallelEnv):
             g1 = parent1.genome
             g2 = parent2.genome
 
+            if PARAMS["SEXUAL_REPRODUCTION"] is True :
+                # On prend le génome le plus court des deux parents. Il fera office de génome de référence.
+                child_genome = g1 if len(g1) >= len(g2) else g2
+                gShorter = g2 if len(g1) >= len(g2) else g1
 
-            # On prend le génome le plus court des deux parents. Il fera office de génome de référence.
-            child_genome = g1 if len(g1) >= len(g2) else g2
-            gShorter = g2 if len(g1) >= len(g2) else g1
+                # Dans le génome le plus court, on prend un espace, défini aléatoirement,
+                # qui remplacera la partie du gène qu'elle couvre par l'espace. On s'assure aussi
+                # que les indexs font sens en terme de taille. Par exemple :
+                # genome = [A, A, A, A, A, A, A, A, A, A] gShorter = [B, B, B, B, B, B, B]
+                #index0 = 2
+                #index1 = 5
+                #On prend dans gShorter la tranche de l'indice 2 (inclus) à 5 
+                # exclu) → éléments 2, 3, 4 → [B, B, B]
+                #On copie cette tranche dans genome à partir de l'indice 2
+                #Après la copie, genome devient :
+                #[A, A, B, B, B, A, A, A, A, A]
+                size = len(gShorter)
+                index0 = random.randint(0, size - 1)
+                index1 = random.randint(0, size) 
+                if index0 > index1:
+                    index0, index1 = index1, index0
 
-            # Dans le génome le plus court, on prend un espace, défini aléatoirement,
-            # qui remplacera la partie du gène qu'elle couvre par l'espace. On s'assure aussi
-            # que les indexs font sens en terme de taille. Par exemple :
-            # genome = [A, A, A, A, A, A, A, A, A, A] gShorter = [B, B, B, B, B, B, B]
-            #index0 = 2
-            #index1 = 5
-            #On prend dans gShorter la tranche de l'indice 2 (inclus) à 5 
-            # exclu) → éléments 2, 3, 4 → [B, B, B]
-            #On copie cette tranche dans genome à partir de l'indice 2
-            #Après la copie, genome devient :
-            #[A, A, B, B, B, A, A, A, A, A]
-            size = len(gShorter)
-            index0 = random.randint(0, size - 1)
-            index1 = random.randint(0, size) 
-            if index0 > index1:
-                index0, index1 = index1, index0
+                # Notre génome est remplacé dans l'espace entre les indexs
+                child_genome[index0:index1] = gShorter[index0:index1]
 
-            # Notre génome est remplacé dans l'espace entre les indexs
-            child_genome[index0:index1] = gShorter[index0:index1]
+                # Ici, on fait en sorte que le génome fasse la taille moyenne du génome des parents.
+                # On ajoute 1 si la longueur des 2 génomes additionnés est impair.
+                total = len(g1) + len(g2)
+                if total % 2 == 1 and random.randint(0, 1) == 1:
+                    total += 1
+                new_length = total // 2
 
-            # Ici, on fait en sorte que le génome fasse la taille moyenne du génome des parents.
-            # On ajoute 1 si la longueur des 2 génomes additionnés est impair.
-            total = len(g1) + len(g2)
-            if total % 2 == 1 and random.randint(0, 1) == 1:
-                total += 1
-            new_length = total // 2
+                # Si le génome est trop long, on coupe aléatoirement soit le bout du début,
+                # soit de la fin.
+                if len(child_genome) > new_length :
+                    to_trim = len(child_genome) - new_length
+                    if random.random() < 0.5:
+                        child_genome = child_genome[to_trim:]
+                    else:
+                        # trim from back
+                        child_genome = child_genome[:-to_trim]
 
-            # Si le génome est trop long, on coupe aléatoirement soit le bout du début,
-            # soit de la fin.
-            if len(child_genome) > new_length :
-                to_trim = len(child_genome) - new_length
-                if random.random() < 0.5:
-                    child_genome = child_genome[to_trim:]
-                else:
-                    # trim from back
-                    child_genome = child_genome[:-to_trim]
+                """"
+                child_genome = Gene.apply_point_mutations(child_genome)
+                child_genome = Gene.random_insert_deletion(child_genome)    
+                """
 
-
-            child_genome = Gene.apply_point_mutations(child_genome)
-            child_genome = Gene.random_insert_deletion(child_genome)      
-
-            return child_genome
+                return child_genome
+            
+            else :
+                child_genome = g2
+                return child_genome
 
         if None in self.survivors :
             raise ValueError(f"No survivors")
@@ -178,6 +186,7 @@ class BioSim(ParallelEnv):
             agent.genome = self.create_genetic_offsprings()
             agent.brain = NeuralNet.create_wiring_from_genome(agent.genome)
             agent.color = Agent.make_genetic_color_value(agent.genome)
+        self.agents = agent.all_agents
 
 
     # fonction à appeller lors de la fin d'une simulation, et préparation de la prochaine,
@@ -186,18 +195,27 @@ class BioSim(ParallelEnv):
 
         self.condition()
 
+
         for agent in self.agents:
             if agent.alive == False :
                 self.dead_agents.append(agent)
             elif agent.alive == True:
                 self.survivors.append(agent)
 
+        print(len(self.dead_agents))
+        print(len(self.survivors))
+
         for dead in self.dead_agents:
             self.agents.remove(dead)
             self.dead_agents = []
+        
+        self.agents = []
+        Agent.all_agents = []
 
         self.create_genetic_offsprings()
         self.new_population()
+
+        self.survivors = []
 
         self.timestep = 0
         observations = {
@@ -218,11 +236,18 @@ class BioSim(ParallelEnv):
         self.truncations = {agent: False for agent in self.agents}
         infos = {agents: {} for agents in self.agents}
 
+
+        """
+        if self.render_mode == "human" :
+            self.render_frame()
+        """
+
+
+
         for agent in self.agents:
             agent.update_and_move()
 
-        if self.render_mode == "human" :
-            self.render_frame()
+
 
 
         observations = {
@@ -266,18 +291,17 @@ class BioSim(ParallelEnv):
         # ce génome.
         # On dessine ensuite un cercle selon cette couleur et la position
 
-        """"
+    
         for agent in self.agents :
-            color = agent.colors
             pygame.draw.circle(
                 canvas,
-                color,
+                agent.color,
                 #le + 0.5 permet de centrer le cercle
-                (np.array(self.agent_position[agent]) + 0.5) * pix_square_size,
+                (np.array(agent.position) + 0.5) * pix_square_size,
                 #rayon du cercle
                 pix_square_size / 2,
             )
-        """
+
 
         """"
         # on prend la taille de la grille + 1, et on y dessine la grille

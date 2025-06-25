@@ -8,12 +8,12 @@ from params import PARAMS
 # env1 = BioSim(param_env1)
 
 env = BioSim(size=PARAMS["SIZE"], n_agents=PARAMS["N_AGENTS"], max_time=100, render_mode="human")
-observations = env.reset()
+
 running = True
 generation = 0
-
+env.reset()
 pygame.init()
-while generation < 20 and running :
+while generation < 10000 and running :
     print(f"Génération {generation+1}/20 - Agents : {len(env.agents)}")
 
 

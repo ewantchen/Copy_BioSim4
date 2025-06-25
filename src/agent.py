@@ -31,9 +31,10 @@ class Agent:
         self.genome = Gene.make_random_genome()
         self.brain = NeuralNet.create_wiring_from_genome(self.genome)
         self.color = self.make_genetic_color_value(self.genome)
+        self.responsivness = 0.5
 
         # On ajoute à une liste tout les agents à chaque fois qu'ils sont initialisés
-        self.all_agents.append(self)
+        Agent.all_agents.append(self)
 
 
 
@@ -56,6 +57,9 @@ class Agent:
     def Prob2Bool(self, factor: float) -> bool:
         return random.random() < factor
     
+    def response_curve(self, r):
+        k = 2
+        return ((r-2)**(-2*k))- (2**(-2*k)*(1-r))
 
 
     def update_and_move(self):
@@ -63,6 +67,7 @@ class Agent:
         # ensuite par leurs signes, ce qui donne deux chiffres que l'on applique à la position pour déplacer
         # les agents. 
         x, y = self.position
+        level = self.response_curve(self.responsivness)
         movex = 0.0
         movey = 0.0
         actionLevels = self.brain.feed_forward((x, y), self.world_size)
@@ -74,6 +79,9 @@ class Agent:
 
         movex = np.tanh(movex)
         movey = np.tanh(movey)
+        movex *= level
+        movey *= level
+
 
         probX = 1 if self.Prob2Bool(abs(movex)) else 0
         probY = 1 if self.Prob2Bool(abs(movey)) else 0
@@ -158,6 +166,4 @@ class Agent:
                 b %= max_color_val
 
         return (r, g, b)
-    
-agent = Agent()
-print(agent.position)
+
