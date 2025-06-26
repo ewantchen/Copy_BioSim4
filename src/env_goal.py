@@ -67,13 +67,12 @@ class BioSim(ParallelEnv):
     def reset(self, seed=None, options=None):
         Agent.all_agents = []
 
-        """
-        if self.render_mode == "human":
-            self.render_frame()
-        """
-
         for i in range(self.n_agents-1):
             agent = Agent()
+
+        if self.render_mode == "human":
+            self.render_frame()
+
 
         self.agents = agent.all_agents
 
@@ -202,8 +201,7 @@ class BioSim(ParallelEnv):
             elif agent.alive == True:
                 self.survivors.append(agent)
 
-        print(len(self.dead_agents))
-        print(len(self.survivors))
+        print(len(self.agents))
 
         for dead in self.dead_agents:
             self.agents.remove(dead)
@@ -237,17 +235,11 @@ class BioSim(ParallelEnv):
         infos = {agents: {} for agents in self.agents}
 
 
-        """
-        if self.render_mode == "human" :
-            self.render_frame()
-        """
-
-
-
         for agent in self.agents:
             agent.update_and_move()
 
-
+        if self.render_mode == "human" :
+            self.render_frame()
 
 
         observations = {

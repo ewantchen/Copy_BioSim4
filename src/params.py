@@ -3,11 +3,11 @@
 
 PARAMS = {
     "SIZE" : 128,
-    "FPS"  : 12000,
+    "FPS"  : 12,
     "MAX_TIME" : 100,
     "N_AGENTS" : 100,
-    "GENOME_LENGTH" : 10,
-    "SEXUAL_REPRODUCTION" : True
+    "GENOME_LENGTH" : 1,
+    "SEXUAL_REPRODUCTION" : False
 }
 
 def condition(self):
