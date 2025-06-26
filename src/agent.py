@@ -1,14 +1,8 @@
 import numpy as np
 import random
 
-from brain import (
-    Neuron,
-    Gene,
-    NeuralNet,
-    ACTIONS,
-    SENSORS,
-    sensor_values
-)
+from NeuralNet import NeuralNet
+from gene import Gene
 
 from params import PARAMS
 

@@ -13,22 +13,20 @@ running = True
 generation = 0
 observations = env.reset()
 pygame.init()
-while generation < 20 and running :
-    print(f"Génération {generation+1}/20 - Agents : {len(env.agents)}")
 
-
-
+for i in range(200) : 
+    print(f"generation {i}")
     for i in range(env.max_time) :    
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
         if not running :
-            break
+            exit()
         observations, rewards, terminations, truncations, infos = env.step({})
 
-
     env.end_of_sim()
-    generation += 1
+
+
 
 env.close()
 pygame.quit()

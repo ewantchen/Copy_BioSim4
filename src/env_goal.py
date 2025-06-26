@@ -2,14 +2,8 @@
 # utiliser les instances des objets Agent
 
 import pygame.gfxdraw
-from brain import (
-    Neuron,
-    Gene,
-    NeuralNet,
-    ACTIONS,
-    SENSORS,
-    sensor_values
-)
+from NeuralNet import *
+from gene import *
 
 from agent import *
 
@@ -67,12 +61,13 @@ class BioSim(ParallelEnv):
     def reset(self, seed=None, options=None):
         Agent.all_agents = []
 
-        for i in range(self.n_agents-1):
+        for i in range(self.n_agents):
             agent = Agent()
 
-        if self.render_mode == "human":
+        """"
+        if self.render_mode == "human" :
             self.render_frame()
-
+        """
 
         self.agents = agent.all_agents
 
@@ -100,86 +95,82 @@ class BioSim(ParallelEnv):
 
 
     def create_genetic_offsprings(self):
-        for agent in self.survivors:
-            # on selection les parents au hasard.
-            # Peut être changé dans le futur pour correspondre
-            # à la géographie
+        # on selection les parents au hasard.
+        # Peut être changé dans le futur pour correspondre
+        # à la géographie
 
-            parent1 = random.choice(self.survivors)
-            parent2 = random.choice(self.survivors)
-
-
-            # On reprend la logique de bioSim4 pour faire une transmission similaire aux allèles. 
-            # On fait en sorte que le génome soit celui de l'un des deux parents, et qu'une partie soit 
-            # celle de l'autre parent. 
+        parent1 = random.choice(self.survivors)
+        parent2 = random.choice(self.survivors)
 
 
-            g1 = parent1.genome
-            g2 = parent2.genome
+        # On reprend la logique de bioSim4 pour faire une transmission similaire aux allèles. 
+        # On fait en sorte que le génome soit celui de l'un des deux parents, et qu'une partie soit 
+        # celle de l'autre parent. 
 
-            if PARAMS["SEXUAL_REPRODUCTION"] is True :
-                # On prend le génome le plus court des deux parents. Il fera office de génome de référence.
-                child_genome = g1 if len(g1) >= len(g2) else g2
-                gShorter = g2 if len(g1) >= len(g2) else g1
 
-                # Dans le génome le plus court, on prend un espace, défini aléatoirement,
-                # qui remplacera la partie du gène qu'elle couvre par l'espace. On s'assure aussi
-                # que les indexs font sens en terme de taille. Par exemple :
-                # genome = [A, A, A, A, A, A, A, A, A, A] gShorter = [B, B, B, B, B, B, B]
-                #index0 = 2
-                #index1 = 5
-                #On prend dans gShorter la tranche de l'indice 2 (inclus) à 5 
-                # exclu) → éléments 2, 3, 4 → [B, B, B]
-                #On copie cette tranche dans genome à partir de l'indice 2
-                #Après la copie, genome devient :
-                #[A, A, B, B, B, A, A, A, A, A]
-                size = len(gShorter)
-                index0 = random.randint(0, size - 1)
-                index1 = random.randint(0, size) 
-                if index0 > index1:
-                    index0, index1 = index1, index0
+        g1 = parent1.genome
+        g2 = parent2.genome
 
-                # Notre génome est remplacé dans l'espace entre les indexs
-                child_genome[index0:index1] = gShorter[index0:index1]
+        if PARAMS["SEXUAL_REPRODUCTION"] is True :
+            # On prend le génome le plus court des deux parents. Il fera office de génome de référence.
+            child_genome = g1 if len(g1) >= len(g2) else g2
+            gShorter = g2 if len(g1) >= len(g2) else g1
 
-                # Ici, on fait en sorte que le génome fasse la taille moyenne du génome des parents.
-                # On ajoute 1 si la longueur des 2 génomes additionnés est impair.
-                total = len(g1) + len(g2)
-                if total % 2 == 1 and random.randint(0, 1) == 1:
-                    total += 1
-                new_length = total // 2
+            # Dans le génome le plus court, on prend un espace, défini aléatoirement,
+            # qui remplacera la partie du gène qu'elle couvre par l'espace. On s'assure aussi
+            # que les indexs font sens en terme de taille. Par exemple :
+            # genome = [A, A, A, A, A, A, A, A, A, A] gShorter = [B, B, B, B, B, B, B]
+            #index0 = 2
+            #index1 = 5
+            #On prend dans gShorter la tranche de l'indice 2 (inclus) à 5 
+            # exclu) → éléments 2, 3, 4 → [B, B, B]
+            #On copie cette tranche dans genome à partir de l'indice 2
+            #Après la copie, genome devient :
+            #[A, A, B, B, B, A, A, A, A, A]
+            size = len(gShorter)
+            index0 = random.randint(0, size - 1)
+            index1 = random.randint(0, size) 
+            if index0 > index1:
+                index0, index1 = index1, index0
 
-                # Si le génome est trop long, on coupe aléatoirement soit le bout du début,
-                # soit de la fin.
-                if len(child_genome) > new_length :
-                    to_trim = len(child_genome) - new_length
-                    if random.random() < 0.5:
-                        child_genome = child_genome[to_trim:]
-                    else:
-                        # trim from back
-                        child_genome = child_genome[:-to_trim]
+            # Notre génome est remplacé dans l'espace entre les indexs
+            child_genome[index0:index1] = gShorter[index0:index1]
 
-                """"
-                child_genome = Gene.apply_point_mutations(child_genome)
-                child_genome = Gene.random_insert_deletion(child_genome)    
-                """
+            # Ici, on fait en sorte que le génome fasse la taille moyenne du génome des parents.
+            # On ajoute 1 si la longueur des 2 génomes additionnés est impair.
+            total = len(g1) + len(g2)
+            if total % 2 == 1 and random.randint(0, 1) == 1:
+                total += 1
+            new_length = total // 2
 
-                return child_genome
-            
-            else :
-                child_genome = g2
-                return child_genome
+            # Si le génome est trop long, on coupe aléatoirement soit le bout du début,
+            # soit de la fin.
+            if len(child_genome) > new_length :
+                to_trim = len(child_genome) - new_length
+                if random.random() < 0.5:
+                    child_genome = child_genome[to_trim:]
+                else:
+                    # trim from back
+                    child_genome = child_genome[:-to_trim]
 
-        if None in self.survivors :
-            raise ValueError(f"No survivors")
-        else : 
-            raise ValueError("other")
+            """"
+            child_genome = Gene.apply_point_mutations(child_genome)
+            child_genome = Gene.random_insert_deletion(child_genome)    
+            """
+
+            return child_genome
+        
+        else :
+            child_genome = g2
+            return child_genome
+
         
   
 
    
 # Fonction permettant de créer la prochaine génération avec la fonction de création de offsprings.
     def new_population(self):
+        Agent.all_agents = []
         for i in range(self.n_agents):
             agent = Agent()
             agent.genome = self.create_genetic_offsprings()
@@ -194,30 +185,27 @@ class BioSim(ParallelEnv):
 
         self.condition()
 
-
         for agent in self.agents:
             if agent.alive == False :
                 self.dead_agents.append(agent)
             elif agent.alive == True:
                 self.survivors.append(agent)
 
-        print(len(self.agents))
 
-        for dead in self.dead_agents:
-            self.agents.remove(dead)
-            self.dead_agents = []
-        
+        print(len(self.dead_agents))
+        print(len(self.survivors))
+
         self.agents = []
-        Agent.all_agents = []
 
-        self.create_genetic_offsprings()
         self.new_population()
 
+        self.dead_agents = []
         self.survivors = []
+
 
         self.timestep = 0
         observations = {
-            agent.get_observation()
+            Agent.get_observation(agent)
             for agent in self.agents
         }
         return observations
@@ -232,22 +220,22 @@ class BioSim(ParallelEnv):
         self.rewards = {agent: 0 for agent in self.agents}
         self.termination = {agent: False for agent in self.agents}
         self.truncations = {agent: False for agent in self.agents}
-        infos = {agents: {} for agents in self.agents}
+        infos = {agent: {} for agent in self.agents}
 
 
         for agent in self.agents:
-            agent.update_and_move()
-
+            Agent.update_and_move(agent)
+            
+        """"
         if self.render_mode == "human" :
             self.render_frame()
-
+        """
 
         observations = {
-            agent.get_observation()
+            Agent.get_observation(agent)
             for agent in self.agents
         }
 
-    
 
         return observations, self.rewards, self.termination, self.truncations, infos
     
@@ -260,12 +248,9 @@ class BioSim(ParallelEnv):
     def action_space(self, agent):
         return Discrete(len(ACTIONS))
 
-    def render(self):
-        if self.render_mode == "rgb_array":
-            return self.render_frame()
+
 
     def render_frame(self):
-        agent = Agent()
         # On met une clock pour garder une trace du temps passé
         if self.clock is None and self.render_mode == "human":
             self.clock = pygame.time.Clock()
@@ -342,8 +327,6 @@ class BioSim(ParallelEnv):
         self.clock = None
 
 
-self = BioSim()
-self.reset()
-self.end_of_sim()
+
 
 
