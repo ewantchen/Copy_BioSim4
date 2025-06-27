@@ -7,8 +7,8 @@ from params import PARAMS
 # param_env1 = Params(size = 128, n_agents = 21, max_time= 100, render_mode = "human")
 # env1 = BioSim(param_env1)
 
-env = BioSim(size=PARAMS["SIZE"], n_agents=PARAMS["N_AGENTS"], max_time=100, render_mode="human")
-
+env = BioSim(size=PARAMS["SIZE"], n_agents=PARAMS["N_AGENTS"], max_time=PARAMS["MAX_TIME"], render_mode="human")
+""""
 running = True
 generation = 0
 observations = env.reset()
@@ -30,3 +30,16 @@ for i in range(200) :
 
 env.close()
 pygame.quit()
+"""
+
+observations = env.reset()
+pygame.init()
+generation_state = []
+for i in range(1): 
+    for j in range(env.max_time) :
+        observations, rewards, terminations, truncations, infos = env.step({})
+        generation_state.append(env.save_frame_state())
+    env.save_generation_state(i, generation_state)
+    env.end_of_sim()
+
+

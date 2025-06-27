@@ -97,18 +97,18 @@ class Agent:
                 if not self.occupancy[new_x, new_y]:
                     self.occupancy[current_x, current_y] = False
                     self.occupancy[new_x, new_y] = True
-                    self.position = np.array([new_x, new_y], dtype=np.int32)
+                    self.position = new_x, new_y
 
 
     def get_observation(self):
         """Retourne l'observation de l'agent"""
 
         sensor_values = self.brain.get_sensor_values(self.position, self.world_size)
+        action_value = self.update_and_move()
         self.observation = {
             'position': self.position,
             'sensors': sensor_values,
-            # Ajouter un output pour les observations pour les réutiliser lors de la méthode
-            # rgb
+            'new_position' : action_value
         }
 
 

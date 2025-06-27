@@ -18,6 +18,10 @@ import numpy as np
 import pygame
 import hashlib
 
+import json
+import os
+import matplotlib
+
 
 class BioSim(ParallelEnv):
     metadata = {
@@ -191,10 +195,6 @@ class BioSim(ParallelEnv):
             elif agent.alive == True:
                 self.survivors.append(agent)
 
-
-        print(len(self.dead_agents))
-        print(len(self.survivors))
-
         self.agents = []
 
         self.new_population()
@@ -326,6 +326,87 @@ class BioSim(ParallelEnv):
             self.window = None
         self.clock = None
 
+
+    def save_frame_state(self) :
+        frame_state = []        
+        frame_state.append({
+            "frame" : self.timestep,
+        })
+
+        for agent in self.agents : 
+            frame_state.append({
+                "id" : agent.id,
+                "alive" : agent.alive,
+                "position" : agent.position,
+                "color" : agent.color,
+                "genome" : [{"soureType" : g.sourceType, 
+                             "source": g.sourceNum,
+                             "targetType" : g.targetType,
+                             "target": g.targetNum, 
+                             "weight": g.weight
+                             } 
+                             for g in agent.genome]
+            })
+
+        return frame_state
+
+    def save_generation_state(self, gen_number, generation_state) :
+
+
+        folder = os.path.join(os.path.dirname(__file__), "generations")
+
+        os.makedirs(folder, exist_ok=True)
+        with open(os.path.join(folder, f"gen_{gen_number}.json"), "w") as f:
+            json.dump(generation_state, f, indent=2)
+
+
+
+    def render_generation(self, gen_number):
+        folder = os.path.join(os.path.dirname(__file__), "generations")
+        with open(os.path.join(folder, f"gen_{gen_number}.json"), "r") as f:
+            generation_state = json.load(f)
+
+        if not pygame.get_init() : 
+            pygame.init()
+
+        self.clock = pygame.time.Clock()
+        window = pygame.display.set_mode((self.window_size, self.window_size))
+        canvas = pygame.Surface((self.window_size, self.window_size))
+        canvas.fill((255, 255, 255))
+        pix_square_size = self.window_size / self.size
+
+        running = True
+        frame_index = 0
+
+        while running and frame_index < self.max_time:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            window.fill((255, 255, 255))  # Nettoyer la fenêtre à chaque frame
+
+            frame_state = generation_state[frame_index]
+            agents = frame_state[1:]  # Ignorer le premier dict "frame"
+
+            for agent in agents:
+                x, y = agent["position"]
+                color = agent["color"]
+                pygame.draw.circle(
+                    window,
+                    color,
+                    ((x + 0.5) * pix_square_size, (y + 0.5) * pix_square_size),
+                    pix_square_size / 2,
+                )
+
+            pygame.display.flip()  # Met à jour tout l’écran
+
+            self.clock.tick(self.metadata["render_fps"])  # Contrôle vitesse (fps)
+
+            frame_index += 1
+
+        pygame.quit()
+
+            
 
 
 
