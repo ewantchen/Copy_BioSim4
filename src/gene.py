@@ -58,15 +58,15 @@ class Gene :
     def random_bit_flip(gene : "Gene") -> "Gene" :
         chance = np.random.rand()
         if chance < 0.2 :
-            gene.sourceType ^= 1 #Flip entre 0 et 1 
-        elif chance < 0.4 : 
+            gene.sourceType ^= 1 #Flip entre 0 et 1
+        elif chance < 0.4 :
             gene.targetType ^= 1
         elif chance < 0.6 :
-            gene.sourceNum ^= (1 << np.random.randint(0,15)) 
-        elif chance < 0.8 : 
+            gene.sourceNum ^= (1 << np.random.randint(0,15))
+        elif chance < 0.8 :
             gene.targetNum ^= (1 << random.randint(0, n_ACTIONS))
         else :
-            gene.weight ^= (1 << np.random.randint(0,15))
+           gene.weight ^= (1 << np.random.randint(0,15))
         return gene
     
     def apply_point_mutations(genome : List["Gene"], mutation_rate = 0.01) -> List["Gene"] :

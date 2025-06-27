@@ -153,11 +153,25 @@ class BioSim(ParallelEnv):
 
             child_genome = []
 
+            g1 = Gene.apply_point_mutations(g1)
+            g1 = Gene.random_insert_deletion(g1)
+
+            g2 = Gene.apply_point_mutations(g2)
+            g2 = Gene.random_insert_deletion(g2)
+
+            #print(len(g1),len(g2))
+
             for i in range(PARAMS["GENOME_LENGTH"]):
                 if random.randint(0, 1) == 0:
-                    child_genome.append(g1[i])
+                    if i > len(g1) - 1:
+                        child_genome.append(g1[random.randint(0,len(g1)-1)])
+                    else :
+                        child_genome.append(g1[i])
                 else:
-                    child_genome.append(g2[i])
+                    if i > len(g2) - 1:
+                        child_genome.append(g1[random.randint(0,len(g2)-1)])
+                    else :
+                        child_genome.append(g2[i])
 
 
             # Si le génome est trop long, on coupe aléatoirement soit le bout du début,
@@ -172,8 +186,8 @@ class BioSim(ParallelEnv):
                     child_genome = child_genome[:-to_trim]
             """
 
-            child_genome = Gene.apply_point_mutations(child_genome)
-            child_genome = Gene.random_insert_deletion(child_genome)    
+            #child_genome = Gene.apply_point_mutations(child_genome)
+            #child_genome = Gene.random_insert_deletion(child_genome)
 
 
             return child_genome
