@@ -153,11 +153,11 @@ class BioSim(ParallelEnv):
 
             child_genome = []
 
-            g1 = Gene.apply_point_mutations(g1)
-            g1 = Gene.random_insert_deletion(g1)
+            #g1 = Gene.apply_point_mutations(g1)
+            #g1 = Gene.random_insert_deletion(g1)
 
-            g2 = Gene.apply_point_mutations(g2)
-            g2 = Gene.random_insert_deletion(g2)
+            #g2 = Gene.apply_point_mutations(g2)
+            #g2 = Gene.random_insert_deletion(g2)
 
             #print(len(g1),len(g2))
 
