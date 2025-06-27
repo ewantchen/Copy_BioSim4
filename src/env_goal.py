@@ -118,6 +118,7 @@ class BioSim(ParallelEnv):
         g2 = parent2.genome
 
         if PARAMS["SEXUAL_REPRODUCTION"] is True :
+            """
             # On prend le génome le plus court des deux parents. Il fera office de génome de référence.
             child_genome = g1 if len(g1) >= len(g2) else g2
             gShorter = g2 if len(g1) >= len(g2) else g1
@@ -148,6 +149,16 @@ class BioSim(ParallelEnv):
             if total % 2 == 1 and random.randint(0, 1) == 1:
                 total += 1
             new_length = total // 2
+            """
+
+            child_genome = []
+
+            for i in range(PARAMS["GENOME_LENGTH"]):
+                if random.randint(0, 1) == 0:
+                    child_genome.append(g1[i])
+                else:
+                    child_genome.append(g2[i])
+
 
             # Si le génome est trop long, on coupe aléatoirement soit le bout du début,
             # soit de la fin.
