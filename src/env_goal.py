@@ -33,8 +33,8 @@ class BioSim(ParallelEnv):
     def __init__(self, size=PARAMS["SIZE"], n_agents=PARAMS["N_AGENTS"], max_time=100, render_mode=None):
         self.n_agents = n_agents
 
-        self.position_occupancy = np.zeros((size, size), dtype=bool)
-
+        #self.position_occupancy = np.zeros((size, size), dtype=bool)
+        self.agents_map = np.zeros((size, size), dtype=bool)
 
         self.agents = []
 
@@ -63,24 +63,26 @@ class BioSim(ParallelEnv):
         self.dead_agents = []
 
     def reset(self, seed=None, options=None):
-        Agent.all_agents = []
+        #Agent.all_agents = []
 
         for i in range(self.n_agents):
-            agent = Agent()
+            agent = Agent(self.agents_map)
+            agent.id = i
+            self.agents.append(agent)
 
         """"
         if self.render_mode == "human" :
             self.render_frame()
         """
 
-        self.agents = agent.all_agents
+        #self.agents = agent.all_agents
 
         self.timestep = 0
 
 
         # pas besoin des observations au début
         observations = {
-            Agent.get_observation(agent)
+            agent.get_observation(self.agents_map)
             for agent in self.agents
         }
 
@@ -149,6 +151,7 @@ class BioSim(ParallelEnv):
 
             # Si le génome est trop long, on coupe aléatoirement soit le bout du début,
             # soit de la fin.
+            """
             if len(child_genome) > new_length :
                 to_trim = len(child_genome) - new_length
                 if random.random() < 0.5:
@@ -156,11 +159,11 @@ class BioSim(ParallelEnv):
                 else:
                     # trim from back
                     child_genome = child_genome[:-to_trim]
+            """
 
-            """"
             child_genome = Gene.apply_point_mutations(child_genome)
             child_genome = Gene.random_insert_deletion(child_genome)    
-            """
+
 
             return child_genome
         
@@ -174,13 +177,14 @@ class BioSim(ParallelEnv):
    
 # Fonction permettant de créer la prochaine génération avec la fonction de création de offsprings.
     def new_population(self):
-        Agent.all_agents = []
+        self.agents = []
         for i in range(self.n_agents):
-            agent = Agent()
+            agent = Agent(self.agents_map)
+            agent.id = i
             agent.genome = self.create_genetic_offsprings()
             agent.brain = NeuralNet.create_wiring_from_genome(agent.genome)
-            agent.color = Agent.make_genetic_color_value(agent.genome)
-        self.agents = agent.all_agents
+            agent.color = agent.make_genetic_color_value()
+            self.agents.append(agent)
 
 
     # fonction à appeller lors de la fin d'une simulation, et préparation de la prochaine,
@@ -190,12 +194,10 @@ class BioSim(ParallelEnv):
         self.condition()
 
         for agent in self.agents:
-            if agent.alive == False :
+            if not agent.alive :
                 self.dead_agents.append(agent)
-            elif agent.alive == True:
+            else:
                 self.survivors.append(agent)
-
-        self.agents = []
 
         self.new_population()
 
@@ -205,7 +207,7 @@ class BioSim(ParallelEnv):
 
         self.timestep = 0
         observations = {
-            Agent.get_observation(agent)
+            agent.get_observation(self.agents_map)
             for agent in self.agents
         }
         return observations
@@ -224,7 +226,7 @@ class BioSim(ParallelEnv):
 
 
         for agent in self.agents:
-            Agent.update_and_move(agent)
+            agent.update_and_move(self.agents_map)
             
         """"
         if self.render_mode == "human" :
@@ -232,7 +234,7 @@ class BioSim(ParallelEnv):
         """
 
         observations = {
-            Agent.get_observation(agent)
+            agent.get_observation(self.agents_map)
             for agent in self.agents
         }
 

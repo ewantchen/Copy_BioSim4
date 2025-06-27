@@ -35,7 +35,7 @@ pygame.quit()
 observations = env.reset()
 pygame.init()
 generation_state = []
-for i in range(1): 
+for i in range(2):
     for j in range(env.max_time) :
         observations, rewards, terminations, truncations, infos = env.step({})
         generation_state.append(env.save_frame_state())
