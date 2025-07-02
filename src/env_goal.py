@@ -338,7 +338,7 @@ class BioSim(ParallelEnv):
         frame_state.append({
             "frame" : self.timestep,
         })
-
+        """"
         for agent in self.agents : 
             frame_state.append({
                 "id" : agent.id,
@@ -355,6 +355,12 @@ class BioSim(ParallelEnv):
                              for g in agent.genome]
                 
             })
+            """
+        for agent in self.agents :
+            frame_state.append({
+                "id" : agent.id,
+                "position" : agent.position,
+                "color" : agent.color,})
 
         return frame_state
 
