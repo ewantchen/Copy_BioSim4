@@ -1,8 +1,15 @@
 from env_goal import BioSim
 
-from generations import *
+
+
+from igraph import *
+import matplotlib.pyplot as plt 
+
+
+import time 
+
 
 env = BioSim()
 
-for i in range(10):
-    env.render_generation(i)
+env.render_generation(0)
+env.render_generation(100)

@@ -3,10 +3,11 @@
 
 PARAMS = {
     "SIZE" : 128,
-    "FPS"  : 12,
-    "MAX_TIME" : 100,
+    "FPS"  : 30,
+    "MAX_TIME" : 300,
     "N_AGENTS" : 100,
-    "GENOME_LENGTH" : 10,
+    "MAX_NEURONS" : 2,
+    "GENOME_LENGTH" : 6,
     "SEXUAL_REPRODUCTION" : True
 }
 

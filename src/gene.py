@@ -20,53 +20,49 @@ class Gene :
         self.weight: int = 0 # Poids (int16)
 
 
-    def weightAsFloat(self) -> float : 
+    def weight_as_float(self) -> float : 
         #Converti le poids entier en float [-1.0 , 1.0]
         return self.weight / 8192.0 #Même méthode dans BioSim4
     
 
     # On défini au tout début comme un weight comme une plage énorme de donnée pour pouvoir
-    # mieux faire muter les poids. Quand on l'applique au feedforward on le met en float.
-
-    # ATTENTION uniformiser le nom des méthodes makeRandomWeight -> make_random_weight
-
-    @staticmethod
-    def make_random_weight() -> float :
+    # mieux faire muter les poids. Quand on l'applique au feedforward on le met en float, dans 
+    # une plage entre -4.0 et 4.0
+    def make_random_weight(self) -> float :
         #Poid aléatoire (comme dans BioSim4)
         return np.random.randint(-32768, 32767) # int16 signé
 
-    @staticmethod
-    def make_random_gene() -> "Gene" :
+
+    def make_random_gene(self) -> "Gene" :
         #crée un gène (comme dans BioSim4)
         gene = Gene()
         gene.sourceType = np.random.randint(0,2) # 0=NEURON, 1=SENSOR
         gene.sourceNum = np.random.randint(0, 0x7FFF) # 15 bits (comme BioSim)
         gene.targetType = np.random.randint(0, 2) # 0=NEURON, 1=ACTION
         gene.targetNum = np.random.randint(0, 0x7FFF) # 15 bits
-        gene.weight = Gene.make_random_weight()
+        gene.weight = self.make_random_weight()
         return gene
     
-    @staticmethod
-    def make_random_genome(min_len=10, max_len=50) -> "List[Gene]" :
+
+    def make_random_genome(self, min_len=10, max_len=50) -> "List[Gene]" :
         #Crée un génome aléatoire
         length = PARAMS["GENOME_LENGTH"]
-        return [Gene.make_random_gene() for _ in range(length)]
+        return [self.make_random_gene() for _ in range(length)]
     
     # On change avec une chance de 20% à chaque fois de changer par un bit l'information d'un individu.
     # Cette méthode marche très bien en C++, qui a un controle sur tout les bits.
-    @staticmethod
-    def random_bit_flip(gene : "Gene") -> "Gene" :
+    def random_bit_flip(self, gene : "Gene") -> "Gene" :
         chance = np.random.rand()
         if chance < 0.2 :
-            gene.sourceType ^= 1 #Flip entre 0 et 1
+            self.sourceType ^= 1 #Flip entre 0 et 1
         elif chance < 0.4 :
-            gene.targetType ^= 1
+            self.targetType ^= 1
         elif chance < 0.6 :
-            gene.sourceNum ^= (1 << np.random.randint(0,15))
+            self.sourceNum ^= (1 << np.random.randint(0,15))
         elif chance < 0.8 :
-            gene.targetNum ^= (1 << random.randint(0, n_ACTIONS))
+            self.targetNum ^= (1 << random.randint(0, n_ACTIONS))
         else :
-           gene.weight ^= (1 << np.random.randint(0,15))
+           self.weight ^= (1 << np.random.randint(0,15))
         return gene
     
     def apply_point_mutations(genome : List["Gene"], mutation_rate = 0.01) -> List["Gene"] :

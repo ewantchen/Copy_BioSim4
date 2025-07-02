@@ -22,7 +22,7 @@ class Agent:
         # des fonctions.
         self.alive = True
         self.position = self.set_position(env_map)
-        self.genome = Gene.make_random_genome()
+        self.genome = Gene().make_random_genome()
         self.brain = NeuralNet.create_wiring_from_genome(self.genome)
         self.color = self.make_genetic_color_value()
         self.responsivness = 0.5

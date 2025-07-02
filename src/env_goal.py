@@ -94,11 +94,10 @@ class BioSim(ParallelEnv):
         # de la simulation
         for agent in self.agents:
             x, y = agent.position
-            if x > self.size // 2:
-                agent.alive = False
-            else:
+            if self.size // 2 > x : 
                 agent.alive = True
-
+            else :
+                agent.alive = False
 
     def create_genetic_offsprings(self):
         # on selection les parents au hasard.
@@ -263,6 +262,8 @@ class BioSim(ParallelEnv):
             for agent in self.agents
         }
 
+        self.timestep += 1
+
 
         return observations, self.rewards, self.termination, self.truncations, infos
     
@@ -307,28 +308,6 @@ class BioSim(ParallelEnv):
             )
 
 
-        """"
-        # on prend la taille de la grille + 1, et on y dessine la grille
-        for x in range(self.size + 1) :
-         # lignes horizontales
-         pygame.draw.line(
-            canvas,
-            0,
-            # Le point de départ est sur l'axe horizontal
-            (0, pix_square_size * x),
-            # Point d'arrivée est sur la fin de la grille
-            (self.window_size, pix_square_size * x),
-            width=1,
-            )
-         # lignes verticales
-         pygame.draw.line(
-            canvas,
-            0,
-            (pix_square_size * x, 0),
-            (pix_square_size * x, self.window_size),
-            width=1,
-        )"""
-
         if self.render_mode == "human":
             # Blit copie le contenu sur la fenêtre
             # Pump gère les évènements internes
@@ -366,13 +345,15 @@ class BioSim(ParallelEnv):
                 "alive" : agent.alive,
                 "position" : agent.position,
                 "color" : agent.color,
-                "genome" : [{"soureType" : g.sourceType, 
-                             "source": g.sourceNum,
+
+                "genome" : [{"sourceType" : g.sourceType, 
+                             "sourceNum": g.sourceNum,
                              "targetType" : g.targetType,
-                             "target": g.targetNum, 
+                             "targetNum": g.targetNum, 
                              "weight": g.weight
                              } 
                              for g in agent.genome]
+                
             })
 
         return frame_state

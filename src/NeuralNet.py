@@ -89,9 +89,9 @@ class NeuralNet :
                 inputVal = self.neurons[gene.sourceNum].output
             
             if gene.targetType == 1 :
-                actionLevels[gene.targetNum] += inputVal * gene.weightAsFloat()
+                actionLevels[gene.targetNum] += inputVal * gene.weight_as_float()
             else :
-                neuronAccumulators[gene.targetNum] += inputVal * gene.weightAsFloat()
+                neuronAccumulators[gene.targetNum] += inputVal * gene.weight_as_float()
         
         # Retourne actionLevels, représentant les niveau d'activation brute des agents
         return actionLevels
@@ -116,12 +116,12 @@ class NeuralNet :
             # On ajoute les gene du génome dans NeuralNet, dans net.connections
             for gene in genome : 
                 if gene.targetType == 0 :
-                    gene.targetNum %= 0x7FFF
+                    gene.targetNum %= PARAMS["MAX_NEURONS"]
                 else :
                     gene.targetNum %= n_ACTIONS
 
                 if gene.sourceType == 0 :
-                    gene.sourceNum %= 0x7FFF
+                    gene.sourceNum %= PARAMS["MAX_NEURONS"]
                 else :
                     gene.sourceNum %= n_SENSORS
                 
