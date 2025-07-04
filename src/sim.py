@@ -33,9 +33,9 @@ pygame.quit()
 """
 
 observations = env.reset()
-saved_generations = [0, 100, 200]
-generation_state = []
-for i in range(200):
+saved_generations = [0, 10, 50, 100, 500]
+for i in range(501):
+    generation_state = []
     print(i)
     for j in range(env.max_time) :
         observations, rewards, terminations, truncations, infos = env.step({})

@@ -94,7 +94,7 @@ class BioSim(ParallelEnv):
         # de la simulation
         for agent in self.agents:
             x, y = agent.position
-            if self.size // 2 > x : 
+            if self.size // 2 < x : 
                 agent.alive = True
             else :
                 agent.alive = False
@@ -222,6 +222,8 @@ class BioSim(ParallelEnv):
                 self.dead_agents.append(agent)
             else:
                 self.survivors.append(agent)
+
+        self.agents_map = np.zeros((self.size, self.size), dtype=bool)
 
         self.new_population()
 
