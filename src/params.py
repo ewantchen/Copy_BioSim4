@@ -1,14 +1,19 @@
 # On y met toutes les variables pour éviter de chercher
 # dans le code les valeurs à changer.
 
+from survival_condition import *
+
 PARAMS = {
     "SIZE" : 128,
-    "FPS"  : 30,
-    "MAX_TIME" : 300, # Il faut laisser assez de temps pour que les agents puissent atteindre l'objectif
+    "FPS"  : 200,
+    "NUM_GENERATION" : 10,
+    "MAX_TIME" : 1000, # Il faut laisser assez de temps pour que les agents puissent atteindre l'objectif
     "N_AGENTS" : 100,
-    "MAX_NEURONS" : 1,
+    "MAX_NEURONS" : 1, # Nombre de neurones internes
     "GENOME_LENGTH" : 4,
-    "SEXUAL_REPRODUCTION" : False
+    "MUTATIONS" : False,
+    "SEXUAL_REPRODUCTION" : False,
+    "SURVIVAL_CRITERIA" : kill_half_map
 }
 
 def condition(self):

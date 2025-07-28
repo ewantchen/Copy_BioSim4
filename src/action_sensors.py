@@ -5,6 +5,7 @@ ACTIONS = [
     "SOUTH",
     "EAST",
     "WEST",
+    "STAY",
 ]
 
 n_ACTIONS = len(ACTIONS)

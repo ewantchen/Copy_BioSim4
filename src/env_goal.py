@@ -7,6 +7,8 @@ from gene import *
 
 from agent import *
 
+
+
 from params import PARAMS
 
 import functools
@@ -30,7 +32,7 @@ class BioSim(ParallelEnv):
         "render_fps": PARAMS["FPS"]
     }
 
-    def __init__(self, size=PARAMS["SIZE"], n_agents=PARAMS["N_AGENTS"], max_time=100, render_mode=None):
+    def __init__(self, size=PARAMS["SIZE"], n_agents=PARAMS["N_AGENTS"], max_time=PARAMS["MAX_TIME"], render_mode=None):
         self.n_agents = n_agents
 
         #self.position_occupancy = np.zeros((size, size), dtype=bool)
@@ -70,10 +72,6 @@ class BioSim(ParallelEnv):
             agent.id = i
             self.agents.append(agent)
 
-        """"
-        if self.render_mode == "human" :
-            self.render_frame()
-        """
 
         #self.agents = agent.all_agents
 
@@ -89,20 +87,10 @@ class BioSim(ParallelEnv):
         return observations
 
 
-    def condition(self):
-        # on décrit une condition de séléction selon les besoins. Sera ensuite appelé à la fin
-        # de la simulation
-        for agent in self.agents:
-            x, y = agent.position
-            if self.size // 2 < x : 
-                agent.alive = True
-            else :
-                agent.alive = False
-
     def create_genetic_offsprings(self):
         # on selection les parents au hasard.
         # Peut être changé dans le futur pour correspondre
-        # à la géographie
+        # à la géographie, au fitness etc...
 
         parent1 = random.choice(self.survivors)
         parent2 = random.choice(self.survivors)
@@ -117,7 +105,7 @@ class BioSim(ParallelEnv):
         g2 = parent2.genome
 
         if PARAMS["SEXUAL_REPRODUCTION"] is True :
-            """
+
             # On prend le génome le plus court des deux parents. Il fera office de génome de référence.
             child_genome = g1 if len(g1) >= len(g2) else g2
             gShorter = g2 if len(g1) >= len(g2) else g1
@@ -148,17 +136,7 @@ class BioSim(ParallelEnv):
             if total % 2 == 1 and random.randint(0, 1) == 1:
                 total += 1
             new_length = total // 2
-            """
 
-            child_genome = []
-
-            #g1 = Gene.apply_point_mutations(g1)
-            #g1 = Gene.random_insert_deletion(g1)
-
-            #g2 = Gene.apply_point_mutations(g2)
-            #g2 = Gene.random_insert_deletion(g2)
-
-            #print(len(g1),len(g2))
 
             for i in range(PARAMS["GENOME_LENGTH"]):
                 if random.randint(0, 1) == 0:
@@ -175,7 +153,7 @@ class BioSim(ParallelEnv):
 
             # Si le génome est trop long, on coupe aléatoirement soit le bout du début,
             # soit de la fin.
-            """
+
             if len(child_genome) > new_length :
                 to_trim = len(child_genome) - new_length
                 if random.random() < 0.5:
@@ -183,10 +161,10 @@ class BioSim(ParallelEnv):
                 else:
                     # trim from back
                     child_genome = child_genome[:-to_trim]
-            """
 
-            #child_genome = Gene.apply_point_mutations(child_genome)
-            #child_genome = Gene.random_insert_deletion(child_genome)
+            if PARAMS["MUTATIONS"] == True :
+                child_genome = Gene.apply_point_mutations(child_genome)
+                child_genome = Gene.random_insert_deletion(child_genome)
 
 
             return child_genome
@@ -215,7 +193,9 @@ class BioSim(ParallelEnv):
     # similaire à Reset()
     def end_of_sim(self):
 
-        self.condition()
+        self.timestep = 0
+
+        PARAMS["SURVIVAL_CRITERIA"](self.size, self.agents)
 
         for agent in self.agents:
             if not agent.alive :
@@ -231,7 +211,7 @@ class BioSim(ParallelEnv):
         self.survivors = []
 
 
-        self.timestep = 0
+
         observations = {
             agent.get_observation(self.agents_map)
             for agent in self.agents
@@ -418,6 +398,7 @@ class BioSim(ParallelEnv):
 
             self.clock.tick(self.metadata["render_fps"])  # Contrôle vitesse (fps)
 
+            print(frame_index)
             frame_index += 1
 
         pygame.quit()

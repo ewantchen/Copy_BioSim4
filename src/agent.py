@@ -62,15 +62,19 @@ class Agent:
         # ensuite par leurs signes, ce qui donne deux chiffres que l'on applique à la position pour déplacer
         # les agents. 
         x, y = self.position
+        stay_threshold = 0.5
         level = self.response_curve(self.responsivness)
         movex = 0.0
         movey = 0.0
         actionLevels = self.brain.feed_forward((x, y), self.world_size)
+        stay_signal = actionLevels[4]
         movex += actionLevels[2]
         movex -= actionLevels[3]
         movey += actionLevels[0]
         movey -= actionLevels[1]
- 
+
+        if stay_signal >= stay_threshold :
+            return
 
         movex = np.tanh(movex)
         movey = np.tanh(movey)
