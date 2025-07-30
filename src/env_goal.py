@@ -342,7 +342,14 @@ class BioSim(ParallelEnv):
             frame_state.append({
                 "id" : agent.id,
                 "position" : agent.position,
-                "color" : agent.color,})
+                "color" : agent.color,
+                "genome" : [{"sourceType" : g.sourceType, 
+                             "sourceNum": g.sourceNum,
+                             "targetType" : g.targetType,
+                             "targetNum": g.targetNum, 
+                             "weight": g.weight
+                             } 
+                             for g in agent.genome]})
 
         return frame_state
 

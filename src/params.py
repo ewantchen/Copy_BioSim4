@@ -5,10 +5,10 @@ from survival_condition import *
 
 PARAMS = {
     "SIZE" : 128,
-    "FPS"  : 200,
+    "FPS"  : 10,
     "NUM_GENERATION" : 10,
-    "MAX_TIME" : 1000, # Il faut laisser assez de temps pour que les agents puissent atteindre l'objectif
-    "N_AGENTS" : 100,
+    "MAX_TIME" : 100, # Il faut laisser assez de temps pour que les agents puissent atteindre l'objectif
+    "N_AGENTS" : 1,
     "MAX_NEURONS" : 1, # Nombre de neurones internes
     "GENOME_LENGTH" : 4,
     "MUTATIONS" : False,

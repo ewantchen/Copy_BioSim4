@@ -118,7 +118,7 @@ class NeuralNet :
                 if gene.targetType == 0 :
                     gene.targetNum %= PARAMS["MAX_NEURONS"]
                 else :
-                    gene.targetNum %= 4
+                    gene.targetNum = 4
 
                 if gene.sourceType == 0 :
                     gene.sourceNum %= PARAMS["MAX_NEURONS"]

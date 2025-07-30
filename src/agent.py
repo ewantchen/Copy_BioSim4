@@ -62,7 +62,6 @@ class Agent:
         # ensuite par leurs signes, ce qui donne deux chiffres que l'on applique à la position pour déplacer
         # les agents. 
         x, y = self.position
-        stay_threshold = 0.5
         level = self.response_curve(self.responsivness)
         movex = 0.0
         movey = 0.0
@@ -73,9 +72,6 @@ class Agent:
         movey += actionLevels[0]
         movey -= actionLevels[1]
 
-        if stay_signal >= stay_threshold :
-            return
-
         movex = np.tanh(movex)
         movey = np.tanh(movey)
         movex *= level
@@ -84,6 +80,9 @@ class Agent:
 
         probX = 1 if self.Prob2Bool(abs(movex)) else 0
         probY = 1 if self.Prob2Bool(abs(movey)) else 0
+        
+        if self.Prob2Bool(abs(actionLevels[4])) and abs(movex) <= abs(actionLevels[4]) and abs(movey) <= abs(actionLevels[4]):
+            return
 
         signX = -1 if movex < 0.0 else 1
         signY = -1 if movey < 0.0 else 1
