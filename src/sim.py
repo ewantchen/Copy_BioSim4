@@ -38,7 +38,7 @@ for i in range(PARAMS["NUM_GENERATION"]+1):
     generation_state = []
     print(i)
     for j in range(env.max_time) :
-        observations, rewards, terminations, truncations, infos = env.step({})
+        env.step()
         if i in saved_generations : 
             generation_state.append(env.save_frame_state())
     env.end_of_sim()

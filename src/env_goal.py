@@ -11,9 +11,6 @@ from agent import *
 
 from params import PARAMS
 
-import functools
-from gymnasium.spaces import Discrete, MultiDiscrete
-from pettingzoo import ParallelEnv
 import random
 import numpy as np
 
@@ -25,7 +22,7 @@ import os
 import matplotlib
 
 
-class BioSim(ParallelEnv):
+class BioSim:
     metadata = {
         "name": "BioSim",
         "render_modes": ["human", "rgb_array"],
@@ -64,7 +61,7 @@ class BioSim(ParallelEnv):
         self.survivors = []
         self.dead_agents = []
 
-    def reset(self, seed=None, options=None):
+    def reset(self):
         #Agent.all_agents = []
 
         for i in range(self.n_agents):
@@ -137,20 +134,6 @@ class BioSim(ParallelEnv):
                 total += 1
             new_length = total // 2
 
-
-            for i in range(PARAMS["GENOME_LENGTH"]):
-                if random.randint(0, 1) == 0:
-                    if i > len(g1) - 1:
-                        child_genome.append(g1[random.randint(0,len(g1)-1)])
-                    else :
-                        child_genome.append(g1[i])
-                else:
-                    if i > len(g2) - 1:
-                        child_genome.append(g1[random.randint(0,len(g2)-1)])
-                    else :
-                        child_genome.append(g2[i])
-
-
             # Si le génome est trop long, on coupe aléatoirement soit le bout du début,
             # soit de la fin.
 
@@ -210,53 +193,14 @@ class BioSim(ParallelEnv):
         self.dead_agents = []
         self.survivors = []
 
-
-
-        observations = {
-            agent.get_observation(self.agents_map)
-            for agent in self.agents
-        }
-        return observations
-
-    def step(self, action):
-        # On initialise les informations à chaque step pour ensuite utiliser ces informations
-        # et les envoyer au prochain step. Rewards permet de sélectionner à la fin d'une sim.
-        # Termination et truncations permettent d'éliminer tout les agents non sélectionnés.
-        # Infos est une condition necéssaire pour PettingZoo.
-        # Rewards pourra être utiliser plus tard pour faire un score de fitness pour 
-        # choisir mieux les parents.
-        self.rewards = {agent: 0 for agent in self.agents}
-        self.termination = {agent: False for agent in self.agents}
-        self.truncations = {agent: False for agent in self.agents}
-        infos = {agent: {} for agent in self.agents}
-
-
+    def step(self):
+        # On fait bouger chaque agent selon l'action décidée par la foncion.
         for agent in self.agents:
             agent.update_and_move(self.agents_map)
-            
-        """"
-        if self.render_mode == "human" :
-            self.render_frame()
-        """
-
-        observations = {
-            agent.get_observation(self.agents_map)
-            for agent in self.agents
-        }
 
         self.timestep += 1
 
 
-        return observations, self.rewards, self.termination, self.truncations, infos
-    
-
-    @functools.lru_cache(maxsize=None)
-    def observation_space(self, agent):
-        return MultiDiscrete(np.array([self.size, self.size]))
-
-    @functools.lru_cache(maxsize=None)
-    def action_space(self, agent):
-        return Discrete(len(ACTIONS))
 
 
 
@@ -342,6 +286,7 @@ class BioSim(ParallelEnv):
             frame_state.append({
                 "id" : agent.id,
                 "position" : agent.position,
+                "alive" : agent.alive,
                 "color" : agent.color,
                 "genome" : [{"sourceType" : g.sourceType, 
                              "sourceNum": g.sourceNum,

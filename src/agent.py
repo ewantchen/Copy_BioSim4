@@ -104,18 +104,6 @@ class Agent:
                     self.position = new_x, new_y
 
 
-    def get_observation(self, env_map):
-        """Retourne l'observation de l'agent"""
-
-        sensor_values = self.brain.get_sensor_values(self.position, self.world_size)
-        action_value = self.update_and_move(env_map)
-        self.observation = {
-            'position': self.position,
-            'sensors': sensor_values,
-            'new_position' : action_value
-        }
-
-
     # on transforme la valeur génétique en couleur.
     # Un gène possède 5 informations : sa source, sa cible et son poid
     # ici, on prend le premier et le dernier gène et on transforme par 
