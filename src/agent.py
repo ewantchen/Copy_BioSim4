@@ -49,6 +49,7 @@ class Agent:
 
 
         # Fonction qui permet de transformer une action en probabilité
+    
     def Prob2Bool(self, factor: float) -> bool:
         return random.random() < factor
     

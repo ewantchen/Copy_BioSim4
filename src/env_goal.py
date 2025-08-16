@@ -75,13 +75,6 @@ class BioSim:
         self.timestep = 0
 
 
-        # pas besoin des observations au début
-        observations = {
-            agent.get_observation(self.agents_map)
-            for agent in self.agents
-        }
-
-        return observations
 
 
     def create_genetic_offsprings(self):
@@ -194,14 +187,11 @@ class BioSim:
         self.survivors = []
 
     def step(self):
-        # On fait bouger chaque agent selon l'action décidée par la foncion.
+        # On fait bouger chaque agent selon l'action décidée par la fonction
         for agent in self.agents:
             agent.update_and_move(self.agents_map)
 
         self.timestep += 1
-
-
-
 
 
     def render_frame(self):
@@ -260,31 +250,12 @@ class BioSim:
 
 
     def save_frame_state(self) :
-        frame_state = []        
-        frame_state.append({
+        frame_state = {
             "frame" : self.timestep,
-        })
-        """"
-        for agent in self.agents : 
-            frame_state.append({
-                "id" : agent.id,
-                "alive" : agent.alive,
-                "position" : agent.position,
-                "color" : agent.color,
-
-                "genome" : [{"sourceType" : g.sourceType, 
-                             "sourceNum": g.sourceNum,
-                             "targetType" : g.targetType,
-                             "targetNum": g.targetNum, 
-                             "weight": g.weight
-                             } 
-                             for g in agent.genome]
-                
-            })
-            """
+            "agents" : {}}     
+        
         for agent in self.agents :
-            frame_state.append({
-                "id" : agent.id,
+            frame_state["agents"][int(agent.id)] = {
                 "position" : agent.position,
                 "alive" : agent.alive,
                 "color" : agent.color,
@@ -294,7 +265,7 @@ class BioSim:
                              "targetNum": g.targetNum, 
                              "weight": g.weight
                              } 
-                             for g in agent.genome]})
+                             for g in agent.genome]}
 
         return frame_state
 
