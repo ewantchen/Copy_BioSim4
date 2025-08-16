@@ -3,7 +3,7 @@ import json
 import os
 
 
-# On récupère toutes les données de nos générations.
+# On récupère toutes les données de la génération.
 def load_generation_data(gen_number):
     folder = os.path.join(os.path.dirname(__file__), "src", "generations")
     with open(os.path.join(folder, f"gen_{gen_number}.json"), "r") as f:
@@ -23,6 +23,7 @@ def create_graph(gen_data, frame_index = 1, agent_id = 1):
 
     genome = agent_data["genome"]
 
+
     for gene in genome : 
         source =gene["sourceNum"]
         target = gene["targetNum"]
@@ -40,6 +41,7 @@ def create_graph(gen_data, frame_index = 1, agent_id = 1):
 
         weights.append(gene["weight"])
 
+        # ces fonctions traitent ensuite des informations stockées pour en faire un graphe
         g = ig.Graph()
         g.add_vertices(len(vertex_list))
         g.add_edges(mapped_edges)
@@ -56,7 +58,7 @@ def create_graph(gen_data, frame_index = 1, agent_id = 1):
 def print_graph() :
     data = load_generation_data(1)
     graph = create_graph(data)
-    layout = 'fruchterman_reingold'
+    layout = 'fruchterman_reingold' # permet d'avoir le style du graphe.
     ig.plot(graph, layout)
 
 print_graph()
