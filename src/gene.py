@@ -47,7 +47,7 @@ class Gene :
     def make_random_genome(self, min_len=10, max_len=50) -> "List[Gene]" :
         #Crée un génome aléatoire
         length = PARAMS["GENOME_LENGTH"]
-        return [self.make_random_gene() for _ in range(length)]
+        return [self.make_random_gene() for i in range(length)]
     
     # On change avec une chance de 20% à chaque fois de changer par un bit l'information d'un individu.
     # Cette méthode marche très bien en C++, qui a un controle sur tout les bits.

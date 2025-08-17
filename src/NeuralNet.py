@@ -118,7 +118,7 @@ class NeuralNet :
                 if gene.targetType == 0 :
                     gene.targetNum %= PARAMS["MAX_NEURONS"]
                 else :
-                    gene.targetNum = 4
+                    gene.targetNum %= n_ACTIONS
 
                 if gene.sourceType == 0 :
                     gene.sourceNum %= PARAMS["MAX_NEURONS"]
@@ -152,6 +152,8 @@ class NeuralNet :
                     if gene.sourceNum not in node_map and gene.sourceNum < 0x7FFF :
                         node_map[gene.sourceNum] = Node()
                         node_map[gene.sourceNum].numOutputs += 1
+                
+
             
 
             # On ajoute un moyen de trier et supprimer tous les neurones inutiles.
@@ -175,6 +177,7 @@ class NeuralNet :
                         removed_connections = 0
                         while i < len(net.connections):
                             gene = net.connections[i]
+                            # Si le connexion concerne un neurone interne et qu'il est dans la liste de neurones
                             if (gene.targetType == 0 and gene.targetNum == neuron) or (gene.sourceType == 0 and gene.sourceNum == neuron):
                                 # Si la connexion supprime la sortie d'un autre neurone, décrémente le compteur
                                 if gene.sourceType == 0 and gene.sourceNum in node_map:
