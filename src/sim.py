@@ -33,7 +33,7 @@ pygame.quit()
 """
 
 
-saved_generations = [0,1,2,3,4,5,6,7,8,9]
+saved_generations = [0,1]
 env.reset()
 for i in range(PARAMS["NUM_GENERATION"]+1):
     generation_state = []

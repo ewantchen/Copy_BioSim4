@@ -8,9 +8,9 @@ PARAMS = {
     "FPS"  : 10,
     "NUM_GENERATION" : 10,
     "MAX_TIME" : 100, # Il faut laisser assez de temps pour que les agents puissent atteindre l'objectif
-    "N_AGENTS" : 100,
-    "MAX_NEURONS" : 1, # Nombre de neurones internes
-    "GENOME_LENGTH" : 4,
+    "N_AGENTS" : 2,
+    "MAX_NEURONS" : 50, # Nombre de neurones internes
+    "GENOME_LENGTH" : 200,
     "MUTATIONS" : False,
     "SEXUAL_REPRODUCTION" : False,
     "SURVIVAL_CRITERIA" : kill_half_map
