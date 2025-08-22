@@ -305,11 +305,12 @@ class BioSim:
             window.fill((255, 255, 255))  # Nettoyer la fenêtre à chaque frame
 
             frame_state = generation_state[frame_index]
-            agents = frame_state[1:]  # Ignorer le premier dict "frame"
+            #agents = frame_state[1:]  # Ignorer le premier dict "frame"
+            #agents = frame_state
 
-            for agent in agents:
-                x, y = agent["position"]
-                color = agent["color"]
+            for agent in frame_state["agents"]:
+                x, y = frame_state["agents"][agent]["position"]
+                color = frame_state["agents"][agent]["color"]
                 pygame.draw.circle(
                     window,
                     color,
@@ -317,11 +318,12 @@ class BioSim:
                     pix_square_size / 2,
                 )
 
+
             pygame.display.flip()  # Met à jour tout l’écran
 
             self.clock.tick(self.metadata["render_fps"])  # Contrôle vitesse (fps)
 
-            print(frame_index)
+            #print(frame_index)
             frame_index += 1
 
         pygame.quit()
