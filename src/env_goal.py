@@ -149,9 +149,6 @@ class BioSim:
             child_genome = g2
             return child_genome
 
-        
-  
-
    
 # Fonction permettant de créer la prochaine génération avec la fonction de création de offsprings.
     def new_population(self):
@@ -179,12 +176,16 @@ class BioSim:
             else:
                 self.survivors.append(agent)
 
+        num_dead = {"dead_agents" : len(self.dead_agents)}
+
         self.agents_map = np.zeros((self.size, self.size), dtype=bool)
 
         self.new_population()
 
         self.dead_agents = []
         self.survivors = []
+
+        return num_dead
 
     def step(self):
         # On fait bouger chaque agent selon l'action décidée par la fonction
@@ -270,7 +271,6 @@ class BioSim:
         return frame_state
 
     def save_generation_state(self, gen_number, generation_state) :
-
 
         folder = os.path.join(os.path.dirname(__file__), "generations")
 

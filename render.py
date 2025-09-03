@@ -1,4 +1,4 @@
-from env_goal import BioSim
+from src.env_goal import BioSim
 
 
 

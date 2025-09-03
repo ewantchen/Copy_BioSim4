@@ -36,13 +36,17 @@ pygame.quit()
 saved_generations = [0,2]
 env.reset()
 for i in range(PARAMS["NUM_GENERATION"]+1):
-    generation_state = []
+    generation_state = [] # Contient toutes les informations de la gen
     print(i)
     for j in range(env.max_time) :
         env.step()
         if i in saved_generations : 
             generation_state.append(env.save_frame_state())
-    env.end_of_sim()
+
+    stats = env.end_of_sim()
+    env.save_generation_state(i, stats)
+
+    generation_state.append(stats)
         
     if i in saved_generations :
         env.save_generation_state(i, generation_state)
