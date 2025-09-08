@@ -42,7 +42,7 @@ class BioSim:
 
         self.render_mode = render_mode
         self.window = None
-        self.window_size = 512
+        self.window_size = PARAMS["WINDOW_SIZE"]
         self.clock = None
 
 
@@ -73,8 +73,6 @@ class BioSim:
         #self.agents = agent.all_agents
 
         self.timestep = 0
-
-
 
 
     def create_genetic_offsprings(self):
@@ -148,7 +146,6 @@ class BioSim:
         else :
             child_genome = g2
             return child_genome
-
    
 # Fonction permettant de créer la prochaine génération avec la fonction de création de offsprings.
     def new_population(self):
@@ -160,7 +157,6 @@ class BioSim:
             agent.brain = NeuralNet.create_wiring_from_genome(agent.genome)
             agent.color = agent.make_genetic_color_value()
             self.agents.append(agent)
-
 
     # fonction à appeller lors de la fin d'une simulation, et préparation de la prochaine,
     # similaire à Reset()
@@ -176,7 +172,8 @@ class BioSim:
             else:
                 self.survivors.append(agent)
 
-        num_dead = {"dead_agents" : len(self.dead_agents)}
+        stats = {"dead_agents" : len(self.dead_agents),
+                 "genome_agents" : [Gene.genome_to_hex(agent.genome) for agent in self.agents]}
 
         self.agents_map = np.zeros((self.size, self.size), dtype=bool)
 
@@ -185,7 +182,7 @@ class BioSim:
         self.dead_agents = []
         self.survivors = []
 
-        return num_dead
+        return stats
 
     def step(self):
         # On fait bouger chaque agent selon l'action décidée par la fonction
@@ -193,7 +190,6 @@ class BioSim:
             agent.update_and_move(self.agents_map)
 
         self.timestep += 1
-
 
     def render_frame(self):
         # On met une clock pour garder une trace du temps passé
@@ -213,7 +209,7 @@ class BioSim:
         # ce génome.
         # On dessine ensuite un cercle selon cette couleur et la position
 
-    
+
         for agent in self.agents :
             pygame.draw.circle(
                 canvas,
@@ -249,7 +245,6 @@ class BioSim:
             self.window = None
         self.clock = None
 
-
     def save_frame_state(self) :
         frame_state = {
             "frame" : self.timestep,
@@ -260,13 +255,7 @@ class BioSim:
                 "position" : agent.position,
                 "alive" : agent.alive,
                 "color" : agent.color,
-                "genome" : [{"sourceType" : g.sourceType, 
-                             "sourceNum": g.sourceNum,
-                             "targetType" : g.targetType,
-                             "targetNum": g.targetNum, 
-                             "weight": g.weight
-                             } 
-                             for g in agent.genome]}
+                "genome" : Gene.genome_to_hex(agent.genome)}
 
         return frame_state
 
@@ -277,59 +266,6 @@ class BioSim:
         os.makedirs(folder, exist_ok=True)
         with open(os.path.join(folder, f"gen_{gen_number}.json"), "w") as f:
             json.dump(generation_state, f, indent=2)
-
-
-
-    def render_generation(self, gen_number):
-        folder = os.path.join(os.path.dirname(__file__), "generations")
-        with open(os.path.join(folder, f"gen_{gen_number}.json"), "r") as f:
-            generation_state = json.load(f)
-
-        if not pygame.get_init() : 
-            pygame.init()
-
-        self.clock = pygame.time.Clock()
-        window = pygame.display.set_mode((self.window_size, self.window_size))
-        canvas = pygame.Surface((self.window_size, self.window_size))
-        canvas.fill((255, 255, 255))
-        pix_square_size = self.window_size / self.size
-
-        running = True
-        frame_index = 0
-
-        while running and frame_index < self.max_time:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-
-            window.fill((255, 255, 255))  # Nettoyer la fenêtre à chaque frame
-
-            frame_state = generation_state[frame_index]
-            #agents = frame_state[1:]  # Ignorer le premier dict "frame"
-            #agents = frame_state
-
-            for agent in frame_state["agents"]:
-                x, y = frame_state["agents"][agent]["position"]
-                color = frame_state["agents"][agent]["color"]
-                pygame.draw.circle(
-                    window,
-                    color,
-                    ((x + 0.5) * pix_square_size, (y + 0.5) * pix_square_size),
-                    pix_square_size / 2,
-                )
-
-
-            pygame.display.flip()  # Met à jour tout l’écran
-
-            self.clock.tick(self.metadata["render_fps"])  # Contrôle vitesse (fps)
-
-            #print(frame_index)
-            frame_index += 1
-
-        pygame.quit()
-
-            
-
 
 
 

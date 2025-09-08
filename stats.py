@@ -19,7 +19,5 @@ def survival_rate(gen_data) :
     survival_ratio = int(dead_num) / PARAMS["N_AGENTS"]
     return survival_ratio
 
-data = load_generation_data(4)
-
-r = survival_rate(data)
-print(r)
+def genetic_diversity() : 
+    pass

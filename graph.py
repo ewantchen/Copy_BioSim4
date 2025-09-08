@@ -1,6 +1,7 @@
 import igraph as ig 
 import json 
 import os
+from src.gene import Gene
 
 
 # On récupère toutes les données de la génération.
@@ -21,16 +22,16 @@ def create_graph(gen_data, frame_index = 0, agent_id = 1):
     vertices = set() # on utilise un set() pour qu'il n'y ai pas de doublons automatiquement.
     weights = []
 
-    genome = agent_data["genome"]
+    genome = Gene.hex_to_genome(agent_data["genome"])
 
     for gene in genome:
-        source_key = ("N" if gene["sourceType"] == 0 else "S") + str(gene["sourceNum"])
-        target_key = ("N" if gene["targetType"] == 0 else "A") + str(gene["targetNum"])
+        source_key = ("N" if gene.sourceType == 0 else "S") + str(gene.sourceNum)
+        target_key = ("N" if gene.targetType == 0 else "A") + str(gene.targetNum)
 
         vertices.add(source_key)
         vertices.add(target_key)
         edges.append((source_key, target_key))
-        weights.append(gene["weight"])
+        weights.append(gene.weight)
 
 
 
@@ -52,18 +53,18 @@ def create_graph(gen_data, frame_index = 0, agent_id = 1):
 
     for gene in genome:     
         # Source
-        if gene["sourceType"] == 0:  # Neurone
-            key = f"N{gene['sourceNum']}"
+        if gene.sourceType == 0:  # Neurone
+            key = f"N{gene.sourceNum}"
         else:  # Sensor
-            key = f"S{gene['sourceNum']}"
+            key = f"S{gene.sourceNum}"
         vertex_index = vertex_map[key]
         g.vs[vertex_index]["name"] = key
 
         # Target
-        if gene["targetType"] == 0:  # Neurone
-            key = f"N{gene['targetNum']}"
+        if gene.targetType == 0:  # Neurone
+            key = f"N{gene.targetNum}"
         else:  # Action
-            key = f"A{gene['targetNum']}"
+            key = f"A{gene.targetNum}"
         vertex_index = vertex_map[key]
         g.vs[vertex_index]["name"] = key
 
@@ -74,10 +75,10 @@ def create_graph(gen_data, frame_index = 0, agent_id = 1):
     
     # Analyser chaque gène
     for i, gene in enumerate(genome):
-        source_type = "SENSOR" if gene["sourceType"] == 1 else "NEURON"
-        target_type = "ACTION" if gene["targetType"] == 1 else "NEURON"
+        source_type = "SENSOR" if gene.sourceType == 1 else "NEURON"
+        target_type = "ACTION" if gene.targetType == 1 else "NEURON"
         
-        print(f"Gène {i}: {source_type}_{gene['sourceNum']} → {target_type}_{gene['targetNum']} (weight: {gene['weight']})")
+        print(f"Gène {i}: {source_type}_{gene.sourceNum} → {target_type}_{gene.targetNum} (weight: {gene.weight})")
         
 
     g.es["weight"] = weights
@@ -90,7 +91,7 @@ def create_graph(gen_data, frame_index = 0, agent_id = 1):
 
 
 def print_graph() :
-    data = load_generation_data(1)
+    data = load_generation_data(2)
     graph = create_graph(data)
     layout = "fruchterman_reingold" # permet d'avoir le style du graphe.
     ig.plot(graph, "graph.png", edge_curved=True, bbox=(400,400), margin=64, layout=layout, vertex_label=graph.vs["name"])

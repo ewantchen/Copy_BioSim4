@@ -3,9 +3,9 @@
 import numpy as np 
 import random
 from typing import List, Dict, Tuple
-from params import PARAMS
+from src.params import PARAMS
 
-from action_sensors import *
+from src.action_sensors import *
 
 
 # Un Gene est défini comme une connexion entre deux neurones. Il comporte comme information
@@ -18,7 +18,6 @@ class Gene :
         self.targetType: int = 0 #0=NEURON, 1=ACTION
         self.targetNum: int = 0 #Index de la cible (où va l'output)
         self.weight: int = 0 # Poids (int16)
-
 
     def weight_as_float(self) -> float : 
         #Converti le poids entier en float [-1.0 , 1.0]
@@ -81,3 +80,38 @@ class Gene :
             elif len(genome) < max_length :
                 genome.append(Gene.make_random_gene())
         return genome
+    
+
+    @staticmethod
+    def hex_to_genome(hex_list: list[str]) -> list["Gene"]:
+        genome = []
+        for hex_str in hex_list:
+            value = int(hex_str, 16)  # Convertit la string hex en entier
+            gene = Gene()
+            gene.sourceType = (value >> 47) & 0x1
+            gene.sourceNum  = (value >> 32) & 0x7FFF
+            gene.targetType = (value >> 31) & 0x1
+            gene.targetNum  = (value >> 16) & 0x7FFF
+            gene.weight     = value & 0xFFFF
+            # Convertir weight en int16 signé
+            if gene.weight >= 0x8000:
+                gene.weight -= 0x10000
+
+            genome.append(gene)
+        return genome
+
+
+    # Fonction faite à l'aide de Chatgpt permettant de transformer un genome en
+    # code hexadécimal.
+    @staticmethod
+    def genome_to_hex(genome: list["Gene"]) -> list[str]:
+        hex_list = []
+        for gene in genome:
+            # Concatène les champs en un entier 48 bits
+            value = ((gene.sourceType & 0x1) << 47) | \
+                    ((gene.sourceNum & 0x7FFF) << 32) | \
+                    ((gene.targetType & 0x1) << 31) | \
+                    ((gene.targetNum & 0x7FFF) << 16) | \
+                    (gene.weight & 0xFFFF)
+            hex_list.append(f"{value:012X}")  # 12 caractères hex pour 48 bits
+        return hex_list

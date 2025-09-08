@@ -104,7 +104,6 @@ class Agent:
                     env_map[new_x, new_y] = True
                     self.position = new_x, new_y
 
-
     # on transforme la valeur génétique en couleur.
     # Un gène possède 5 informations : sa source, sa cible et son poid
     # ici, on prend le premier et le dernier gène et on transforme par 
