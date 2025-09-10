@@ -48,54 +48,20 @@ class Gene :
         length = PARAMS["GENOME_LENGTH"]
         return [self.make_random_gene() for i in range(length)]
     
-    # On change avec une chance de 20% à chaque fois de changer par un bit l'information d'un individu.
-    # Cette méthode marche très bien en C++, qui a un controle sur tout les bits.
-    def random_bit_flip(self, gene : "Gene") -> "Gene" :
-        chance = np.random.rand()
-        if chance < 0.2 :
-            self.sourceType ^= 1 #Flip entre 0 et 1
-        elif chance < 0.4 :
-            self.targetType ^= 1
-        elif chance < 0.6 :
-            self.sourceNum ^= (1 << np.random.randint(0,15))
-        elif chance < 0.8 :
-            self.targetNum ^= (1 << random.randint(0, n_ACTIONS))
-        else :
-           self.weight ^= (1 << np.random.randint(0,15))
-        return gene
     
-    def apply_point_mutations(genome : List["Gene"], mutation_rate = 0.01) -> List["Gene"] :
-        #applique des mutations aléatoires (comme BioSim)
-        for gene in genome : 
-            if np.random.rand() < mutation_rate : 
-                Gene.random_bit_flip(gene)
-        return genome
 
-    
-    def random_insert_deletion(genome: List["Gene"], max_length=100) -> List["Gene"] :
-        #ajoute ou supprime un gène aléatoirement
-        if np.random.rand() < 0.05 : # 5% de chance 
-            if np.random.rand() < 0.5 and len(genome) > 1 :
-                genome.pop(np.random.randint(0,len(genome))) #supprime
-            elif len(genome) < max_length :
-                genome.append(Gene.make_random_gene())
-        return genome
     
 
     @staticmethod
     def hex_to_genome(hex_list: list[str]) -> list["Gene"]:
         genome = []
         for hex_str in hex_list:
-            value = int(hex_str, 16)  # Convertit la string hex en entier
+            value = int(hex_str, 16) & 0xFFFFFFFF
             gene = Gene()
-            gene.sourceType = (value >> 47) & 0x1
-            gene.sourceNum  = (value >> 32) & 0x7FFF
-            gene.targetType = (value >> 31) & 0x1
-            gene.targetNum  = (value >> 16) & 0x7FFF
-            gene.weight     = value & 0xFFFF
-            # Convertir weight en int16 signé
-            if gene.weight >= 0x8000:
-                gene.weight -= 0x10000
+            gene.sourceType = (value >> 31) & 0x1       
+            gene.sourceNum  = (value >> 16) & 0x7FFF    
+            gene.targetType = (value >> 15) & 0x1       
+            gene.targetNum  = value & 0x7FFF            
 
             genome.append(gene)
         return genome
@@ -104,14 +70,47 @@ class Gene :
     # Fonction faite à l'aide de Chatgpt permettant de transformer un genome en
     # code hexadécimal.
     @staticmethod
-    def genome_to_hex(genome: list["Gene"]) -> list[str]:
-        hex_list = []
-        for gene in genome:
-            # Concatène les champs en un entier 48 bits
-            value = ((gene.sourceType & 0x1) << 47) | \
-                    ((gene.sourceNum & 0x7FFF) << 32) | \
-                    ((gene.targetType & 0x1) << 31) | \
-                    ((gene.targetNum & 0x7FFF) << 16) | \
-                    (gene.weight & 0xFFFF)
-            hex_list.append(f"{value:012X}")  # 12 caractères hex pour 48 bits
-        return hex_list
+    def genome_to_hex(genome):
+        hex = []
+        for gene in genome : 
+            value = ((gene.sourceType & 1) << 31) | \
+                    ((gene.sourceNum  & 0x7FFF) << 16) | \
+                    ((gene.targetType & 1) << 15) | \
+                    (gene.targetNum  & 0x7FFF)
+            hex.append(f"{value:08X}")
+        return hex    
+    
+
+# On change avec une chance de 20% à chaque fois de changer par un bit l'information d'un individu.
+# Cette méthode marche très bien en C++, qui a un controle sur tout les bits.
+def random_bit_flip(gene : "Gene") -> "Gene" :
+    chance = np.random.rand()
+    if chance < 0.2 :
+        gene.sourceType ^= 1 #Flip entre 0 et 1
+    elif chance < 0.4 :
+        gene.targetType ^= 1
+    elif chance < 0.6 :
+        gene.sourceNum ^= (1 << np.random.randint(0,15))
+    elif chance < 0.8 :
+        gene.targetNum ^= (1 << random.randint(0, n_ACTIONS))
+    else :
+        gene.weight ^= (1 << np.random.randint(0,15))
+    return gene
+
+
+def apply_point_mutations(genome : List["Gene"], mutation_rate = 0.01) -> List["Gene"] :
+    #applique des mutations aléatoires (comme BioSim)
+    for gene in genome : 
+        if np.random.rand() < mutation_rate : 
+            random_bit_flip(gene)
+    return genome
+
+
+def random_insert_deletion(genome: List["Gene"], max_length=100) -> List["Gene"] :
+    #ajoute ou supprime un gène aléatoirement
+    if np.random.rand() < 0.05 : # 5% de chance 
+        if np.random.rand() < 0.5 and len(genome) > 1 :
+            genome.pop(np.random.randint(0,len(genome))) #supprime
+        elif len(genome) < max_length :
+            genome.append(Gene.make_random_gene())
+    return genome

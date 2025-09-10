@@ -78,7 +78,7 @@ def create_graph(gen_data, frame_index = 0, agent_id = 1):
         source_type = "SENSOR" if gene.sourceType == 1 else "NEURON"
         target_type = "ACTION" if gene.targetType == 1 else "NEURON"
         
-        print(f"Gène {i}: {source_type}_{gene.sourceNum} → {target_type}_{gene.targetNum} (weight: {gene.weight})")
+        print(f"Gène {i}: {source_type}_{gene.sourceNum} -> {target_type}_{gene.targetNum} (weight: {gene.weight})")
         
 
     g.es["weight"] = weights
@@ -89,7 +89,7 @@ def create_graph(gen_data, frame_index = 0, agent_id = 1):
     return g
 
 
-
+# imprime le graphe sous forme de .png
 def print_graph() :
     data = load_generation_data(2)
     graph = create_graph(data)

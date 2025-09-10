@@ -7,7 +7,7 @@ from gene import *
 
 from agent import *
 
-
+from stats import *
 
 from params import PARAMS
 
@@ -15,11 +15,11 @@ import random
 import numpy as np
 
 import pygame
-import hashlib
+
 
 import json
 import os
-import matplotlib
+
 
 
 class BioSim:
@@ -137,8 +137,8 @@ class BioSim:
                     child_genome = child_genome[:-to_trim]
 
             if PARAMS["MUTATIONS"] == True :
-                child_genome = Gene.apply_point_mutations(child_genome)
-                child_genome = Gene.random_insert_deletion(child_genome)
+                child_genome = apply_point_mutations(child_genome)
+                child_genome = random_insert_deletion(child_genome)
 
 
             return child_genome
@@ -173,7 +173,7 @@ class BioSim:
                 self.survivors.append(agent)
 
         stats = {"dead_agents" : len(self.dead_agents),
-                 "genome_agents" : [Gene.genome_to_hex(agent.genome) for agent in self.agents]}
+                 "genetic_diversity" : genetic_diversity(self.agents)}
 
         self.agents_map = np.zeros((self.size, self.size), dtype=bool)
 

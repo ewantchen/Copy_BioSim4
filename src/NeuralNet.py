@@ -116,7 +116,7 @@ class NeuralNet :
             # On ajoute les gene du génome dans NeuralNet, dans net.connections
             for gene in genome : 
                 if gene.targetType == 0 :
-                    gene.targetNum %= PARAMS["MAX_NEURONS"]
+                   gene.targetNum %= PARAMS["MAX_NEURONS"]
                 else :
                     gene.targetNum %= n_ACTIONS
 

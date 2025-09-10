@@ -8,16 +8,17 @@ from src.survival_condition import *
 
 PARAMS = {
     "SIZE" : 128,
-    "FPS"  : 10,
-    "NUM_GENERATION" : 12,
-    "MAX_TIME" : 100, # Il faut laisser assez de temps pour que les agents puissent atteindre l'objectif
-    "N_AGENTS" : 10,
+    "FPS"  : 10,    
+    "WINDOW_SIZE" : 512,
+    "NUM_GENERATION" : 300,
+    "MAX_TIME" : 300, # Il faut laisser assez de temps pour que les agents puissent atteindre l'objectif
+    "N_AGENTS" : 100,
     "MAX_NEURONS" : 1, # Nombre de neurones internes, minimum 1
     "GENOME_LENGTH" : 4,
-    "MUTATIONS" : False,
-    "SEXUAL_REPRODUCTION" : False,
+    "MUTATIONS" : True,
+    "SEXUAL_REPRODUCTION" : True,
     "SURVIVAL_CRITERIA" : kill_half_map,
-    "WINDOW_SIZE" : 512,
+
 
 }
 
