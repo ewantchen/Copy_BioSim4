@@ -8,9 +8,9 @@ from src.survival_condition import *
 
 PARAMS = {
     "SIZE" : 128,
-    "FPS"  : 10,    
+    "FPS"  : 30,    
     "WINDOW_SIZE" : 512,
-    "NUM_GENERATION" : 300,
+    "NUM_GENERATION" : 10,
     "MAX_TIME" : 300, # Il faut laisser assez de temps pour que les agents puissent atteindre l'objectif
     "N_AGENTS" : 100,
     "MAX_NEURONS" : 1, # Nombre de neurones internes, minimum 1

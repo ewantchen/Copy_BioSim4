@@ -8,7 +8,7 @@ size = PARAMS["SIZE"]
 max_time = PARAMS["MAX_TIME"]
 
 def render_generation(gen_number):
-    folder = os.path.join(os.path.dirname(__file__), "generations")
+    folder = os.path.join(os.path.dirname(__file__), "src","generations")
     with open(os.path.join(folder, f"gen_{gen_number}.json"), "r") as f:
         generation_state = json.load(f)
 
@@ -56,4 +56,11 @@ def render_generation(gen_number):
     pygame.quit()
 
 
+render_generation(0)
+render_generation(1)
 render_generation(2)
+render_generation(3)
+render_generation(4)
+render_generation(5)
+render_generation(6)
+render_generation(7)

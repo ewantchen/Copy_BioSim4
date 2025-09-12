@@ -9,7 +9,7 @@ from params import PARAMS
 
 env = BioSim(size=PARAMS["SIZE"], n_agents=PARAMS["N_AGENTS"], max_time=PARAMS["MAX_TIME"])
 
-saved_generations = []
+saved_generations = [0,1,2,3,4,5,6,7,8,9]
 env.reset()
 for i in range(PARAMS["NUM_GENERATION"]+1):
     generation_state = [] # Contient toutes les informations de la gen

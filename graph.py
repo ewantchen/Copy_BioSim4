@@ -1,7 +1,9 @@
 import igraph as ig 
 import json 
 import os
-from src.gene import Gene
+from src.params import *
+from src.gene import *
+from src.NeuralNet import *
 
 
 # On récupère toutes les données de la génération.
@@ -13,18 +15,28 @@ def load_generation_data(gen_number):
 
 # On crée notre graphe, en récupérant d'abord les données de nos agents et en les 
 # stockants. Ensuite, on les transforme en graphe que l'on pourra ensuite afficher.
-def create_graph(gen_data, frame_index = 0, agent_id = 1):
+def create_graph(gen_data, frame_index = 0, agent_id = 4):
     frame = gen_data[frame_index]
     agents = frame["agents"]
     agent_data = agents[str(agent_id)]
 
+    # On récupère le génome brut (l'ADN)
+    raw_genome = hex_to_genome(agent_data["genome"])
+    
+    # On construit le cerveau fonctionnel à partir du génome
+    # Cette fonction va faire le modulo, l'élagage (culling) et le remappage.
+    functional_brain: NeuralNet = create_wiring_from_genome(raw_genome)
+
+    # On travaille maintenant avec les connexions du cerveau final, pas le génome brut
+    final_connections = functional_brain.connections
+
     edges = []
-    vertices = set() # on utilise un set() pour qu'il n'y ai pas de doublons automatiquement.
+    vertices = set()
     weights = []
 
-    genome = Gene.hex_to_genome(agent_data["genome"])
-
-    for gene in genome:
+    # On parcourt les connexions du cerveau ÉLAGUÉ et REMAPPÉ
+    for gene in final_connections:
+        # Les numéros sont maintenant petits et séquentiels (0, 1, 2...)
         source_key = ("N" if gene.sourceType == 0 else "S") + str(gene.sourceNum)
         target_key = ("N" if gene.targetType == 0 else "A") + str(gene.targetNum)
 
@@ -33,58 +45,22 @@ def create_graph(gen_data, frame_index = 0, agent_id = 1):
         edges.append((source_key, target_key))
         weights.append(gene.weight)
 
+    print(f"Génome brut: {len(raw_genome)} gènes. Cerveau fonctionnel: {len(final_connections)} connexions.")
+    print(f"Noeuds du cerveau fonctionnel: {sorted(list(vertices))}")
 
-
-    print(len(vertices))
-
-    # On doit remap les sommets pour les edges soient dans le bon ordre, 
-    # pour que Igraph puisse comprendre.
-    vertex_list = sorted(vertices)
+    # Le reste de votre code pour créer le graphe avec igraph reste identique...
+    vertex_list = sorted(list(vertices))
     vertex_map = {v: i for i, v in enumerate(vertex_list)}
-
     mapped_edges = [(vertex_map[src], vertex_map[trgt]) for src, trgt in edges]
 
-
-    # ces fonctions traitent ensuite des informations stockées pour en faire un graphe
     g = ig.Graph()
     g.add_vertices(len(vertex_list))
     g.add_edges(mapped_edges)
 
-
-    for gene in genome:     
-        # Source
-        if gene.sourceType == 0:  # Neurone
-            key = f"N{gene.sourceNum}"
-        else:  # Sensor
-            key = f"S{gene.sourceNum}"
-        vertex_index = vertex_map[key]
-        g.vs[vertex_index]["name"] = key
-
-        # Target
-        if gene.targetType == 0:  # Neurone
-            key = f"N{gene.targetNum}"
-        else:  # Action
-            key = f"A{gene.targetNum}"
-        vertex_index = vertex_map[key]
-        g.vs[vertex_index]["name"] = key
-
-        vertex_index = vertex_map[key]
-        g.vs[vertex_index]["name"] = key
-
-    print(f"Nombre total de gènes: {len(genome)}")
-    
-    # Analyser chaque gène
-    for i, gene in enumerate(genome):
-        source_type = "SENSOR" if gene.sourceType == 1 else "NEURON"
-        target_type = "ACTION" if gene.targetType == 1 else "NEURON"
-        
-        print(f"Gène {i}: {source_type}_{gene.sourceNum} -> {target_type}_{gene.targetNum} (weight: {gene.weight})")
-        
-
+    # et le reste de la fonction pour assigner les noms, etc.
+    g.vs["name"] = vertex_list
     g.es["weight"] = weights
-
-
-    g.vs["id"] = vertex_list
+    g.vs["id"] = vertex_list # ou g.vs["label"] = vertex_list pour l'affichage
 
     return g
 

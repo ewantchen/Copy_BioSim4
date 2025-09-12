@@ -2,14 +2,14 @@
 # utiliser les instances des objets Agent
 
 import pygame.gfxdraw
-from NeuralNet import *
-from gene import *
+from .NeuralNet import *
+from .gene import *
 
-from agent import *
+from .agent import *
 
 from stats import *
 
-from params import PARAMS
+from .params import PARAMS
 
 import random
 import numpy as np
@@ -154,7 +154,7 @@ class BioSim:
             agent = Agent(self.agents_map)
             agent.id = i
             agent.genome = self.create_genetic_offsprings()
-            agent.brain = NeuralNet.create_wiring_from_genome(agent.genome)
+            agent.brain = create_wiring_from_genome(agent.genome)
             agent.color = agent.make_genetic_color_value()
             self.agents.append(agent)
 
@@ -255,7 +255,7 @@ class BioSim:
                 "position" : agent.position,
                 "alive" : agent.alive,
                 "color" : agent.color,
-                "genome" : Gene.genome_to_hex(agent.genome)}
+                "genome" : genome_to_hex(agent.genome)}
 
         return frame_state
 

@@ -1,8 +1,8 @@
 import numpy as np
 import random
 
-from NeuralNet import NeuralNet
-from gene import Gene
+from NeuralNet import *
+from gene import *
 
 from params import PARAMS
 
@@ -22,8 +22,8 @@ class Agent:
         # des fonctions.
         self.alive = True
         self.position = self.set_position(env_map)
-        self.genome = Gene().make_random_genome()
-        self.brain = NeuralNet.create_wiring_from_genome(self.genome)
+        self.genome = make_random_genome()
+        self.brain = create_wiring_from_genome(self.genome)
         self.color = self.make_genetic_color_value()
         self.responsivness = 0.5
 
