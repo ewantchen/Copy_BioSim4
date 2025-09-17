@@ -1,7 +1,7 @@
 # Il y a encore du travail, mais cela indique le but à atteindre pour
 # utiliser les instances des objets Agent
 
-import pygame.gfxdraw
+
 from .NeuralNet import *
 from .gene import *
 

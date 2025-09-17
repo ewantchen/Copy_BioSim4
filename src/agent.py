@@ -1,10 +1,10 @@
 import numpy as np
 import random
 
-from NeuralNet import *
-from gene import *
+from .NeuralNet import *
+from .gene import *
 
-from params import PARAMS
+from .params import PARAMS
 
 
 class Agent:
