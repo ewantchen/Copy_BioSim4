@@ -15,7 +15,7 @@ def load_generation_data(gen_number):
 
 # On crée notre graphe, en récupérant d'abord les données de nos agents et en les 
 # stockants. Ensuite, on les transforme en graphe que l'on pourra ensuite afficher.
-def create_graph(gen_data, frame_index = 0, agent_id = 4):
+def create_graph(gen_data, frame_index = 1, agent_id = 14):
     frame = gen_data[frame_index]
     agents = frame["agents"]
     agent_data = agents[str(agent_id)]
@@ -67,7 +67,7 @@ def create_graph(gen_data, frame_index = 0, agent_id = 4):
 
 # imprime le graphe sous forme de .png
 def print_graph() :
-    data = load_generation_data(2)
+    data = load_generation_data(0)
     graph = create_graph(data)
     layout = "fruchterman_reingold" # permet d'avoir le style du graphe.
     ig.plot(graph, "graph.png", edge_curved=True, bbox=(400,400), margin=64, layout=layout, vertex_label=graph.vs["name"])

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 
+
 window_size = PARAMS["WINDOW_SIZE"]
 size = PARAMS["SIZE"]
 max_time = PARAMS["MAX_TIME"]
@@ -93,7 +94,7 @@ def render(gen_number):
 def create_video(frames, output_file, fps = fps ) :
     # On initialise les données pour la fenêtre d'animation
     fig = plt.figure(figsize=(frames[0].get_width()/100, frames[0].get_height()/100))
-    ax = fig.add_subplot(111)
+    ax = fig.add_axes([0,0,1,1])
     ax.axis('off')
 
     # On initialise la première frame
