@@ -115,6 +115,9 @@ def create_video(frames, output_file, fps = fps ) :
 
 frames = list(render(0))
 create_video(frames, "gen_0.mp4")
+frames = list(render(100))
+create_video(frames, "gen_100.mp4")
+
     
 
 
