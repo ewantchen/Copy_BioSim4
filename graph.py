@@ -67,7 +67,7 @@ def create_graph(gen_data, frame_index = 1, agent_id = 14):
 
 # imprime le graphe sous forme de .png
 def print_graph() :
-    data = load_generation_data(0)
+    data = load_generation_data(100)
     graph = create_graph(data)
     layout = "fruchterman_reingold" # permet d'avoir le style du graphe.
     ig.plot(graph, "graph.png", edge_curved=True, bbox=(400,400), margin=64, layout=layout, vertex_label=graph.vs["name"])

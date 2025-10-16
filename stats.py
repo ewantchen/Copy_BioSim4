@@ -56,6 +56,9 @@ def render_survival():
     plt.xlabel("generations")
     plt.show()
 
+render_diversity()
+render_survival()
+
 
     
 

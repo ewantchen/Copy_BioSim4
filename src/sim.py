@@ -20,12 +20,13 @@ for i in range(PARAMS["NUM_GENERATION"]+1):
             generation_state.append(env.save_frame_state())
 
     stats = env.end_of_sim()
-    env.save_generation_state(i, stats)
 
-    generation_state.append(stats)
+    generation_data = stats.copy() 
+    if i in saved_generations:
+        generation_data["frames"] = generation_state
+
         
-    if i in saved_generations :
-        env.save_generation_state(i, generation_state)
+    env.save_generation_state(i, generation_state)
 
 
 
