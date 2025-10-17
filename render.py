@@ -75,7 +75,7 @@ def render(gen_number):
         canvas.fill((255,255,255))
 
         # on récupère toute les données
-        frame_state = generation_state[frame_index]
+        frame_state = generation_state["frames"][frame_index]
         for agent in frame_state["agents"] : 
             x, y = frame_state["agents"][agent]["position"]
             color = frame_state["agents"][agent]["color"]

@@ -56,21 +56,15 @@ class BioSim:
                 pygame.RESIZABLE,
             )
 
-
         self.size = size
         self.survivors = []
         self.dead_agents = []
 
     def reset(self):
-        #Agent.all_agents = []
-
         for i in range(self.n_agents):
             agent = Agent(self.agents_map)
             agent.id = i
             self.agents.append(agent)
-
-
-        #self.agents = agent.all_agents
 
         self.timestep = 0
 

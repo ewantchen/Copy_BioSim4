@@ -16,7 +16,7 @@ def load_generation_data(gen_number):
 # On crée notre graphe, en récupérant d'abord les données de nos agents et en les 
 # stockants. Ensuite, on les transforme en graphe que l'on pourra ensuite afficher.
 def create_graph(gen_data, frame_index = 1, agent_id = 14):
-    frame = gen_data[frame_index]
+    frame = gen_data["frames"][frame_index]
     agents = frame["agents"]
     agent_data = agents[str(agent_id)]
 
