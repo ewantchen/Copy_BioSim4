@@ -1,8 +1,8 @@
-from .env_goal import BioSim
+from src.env_goal import BioSim
 import time
 import pygame
 import os
-from .params import PARAMS
+from src.params import PARAMS
 
 # param_env1 = Params(size = 128, n_agents = 21, max_time= 100, render_mode = "human")
 # env1 = BioSim(param_env1)

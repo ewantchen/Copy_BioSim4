@@ -5,8 +5,6 @@ from src.params import PARAMS
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-
-
 window_size = PARAMS["WINDOW_SIZE"]
 size = PARAMS["SIZE"]
 max_time = PARAMS["MAX_TIME"]
