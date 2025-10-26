@@ -7,10 +7,10 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from src.survival_condition import *
 
 PARAMS = {
-    "SIZE" : 64,
+    "SIZE" : 128,
     "FPS"  : 30 ,    
     "WINDOW_SIZE" : 512,
-    "NUM_GENERATION" : 1001,
+    "NUM_GENERATION" : 101,
     "MAX_TIME" : 300, # Il faut laisser assez de temps pour que les agents puissent atteindre l'objectif
     "N_AGENTS" : 1024,
     "MAX_NEURONS" : 2, # Nombre de neurones internes, minimum 1

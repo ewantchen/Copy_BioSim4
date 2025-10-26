@@ -7,7 +7,7 @@ def kill_half_map(size, agents) :
     # de la simulation
     for agent in agents:
         x, y = agent.position
-        if  13 >  x : 
+        if  (size/2) >  x : 
             agent.alive = True
         else :
             agent.alive = False

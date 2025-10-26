@@ -112,11 +112,24 @@ def create_video(frames, output_file, fps = fps ) :
 
 
 
-
+[0,1,10, 20,30, 50,80, 100]
 frames = list(render(0))
 create_video(frames, "gen_0.mp4")
+frames = list(render(1))
+create_video(frames, "gen_1.mp4")
+frames = list(render(10))
+create_video(frames, "gen_10.mp4")
+frames = list(render(20))
+create_video(frames, "gen_20.mp4")
+frames = list(render(30))
+create_video(frames, "gen_30.mp4")
+frames = list(render(50))
+create_video(frames, "gen_50.mp4")
+frames = list(render(80))
+create_video(frames, "gen_80.mp4")
 frames = list(render(100))
 create_video(frames, "gen_100.mp4")
+
 
     
 
