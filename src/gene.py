@@ -103,7 +103,7 @@ def apply_point_mutations(genome : List["Gene"], mutation_rate = 0.01) -> List["
     return genome
 
 
-def random_insert_deletion(genome: List["Gene"], max_length=100) -> List["Gene"] :
+def random_insert_deletion(genome: List["Gene"], max_length=PARAMS["GENOME_LENGTH"]) -> List["Gene"] :
     #ajoute ou supprime un gène aléatoirement
     if np.random.rand() < 0.05 : # 5% de chance 
         if np.random.rand() < 0.5 and len(genome) > 1 :

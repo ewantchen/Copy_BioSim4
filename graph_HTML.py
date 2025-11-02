@@ -79,9 +79,15 @@ def save_html_graph(g, path="graph.html", layout_name="fruchterman_reingold", wi
 
     # Nœuds + labels
     labels = g.vs["name"] if "name" in g.vs.attributes() else list(map(str, range(g.vcount())))
+
+    # --- Définir les couleurs selon le type ---
+    color_map = {"S": "#C8FACC", "N": "#B8E0FC", "A": "#FFF9A6"}
+    node_colors = [color_map.get(label[0], "#B0BEC5") for label in labels] # gris par défaut
+
     node_trace = go.Scatter(x=xs, y=ys, mode="markers+text",
                             text=labels, textposition="top center",
-                            marker=dict(size=10), hoverinfo="text")
+                            marker=dict(size=10, color=node_colors),
+                            hoverinfo="text")
 
     fig = go.Figure([edge_trace, node_trace])
     fig.update_layout(showlegend=False,
