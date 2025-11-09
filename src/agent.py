@@ -20,7 +20,7 @@ class Agent:
         # Les informations propres à l'agents sont sa position, son code génétique,
         # le cerveau qui en découle ainsi que sa couleur. Elles sont toutes déterminés par
         # des fonctions.
-        self.alive = True
+        self.alive = 1
         self.position = self.set_position(env_map)
         self.genome = make_random_genome()
         self.brain = create_wiring_from_genome(self.genome)

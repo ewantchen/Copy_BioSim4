@@ -1,7 +1,7 @@
 # Il y a encore du travail, mais cela indique le but à atteindre pour
 # utiliser les instances des objets Agent
 
-
+import copy
 from .NeuralNet import *
 from .gene import *
 
@@ -59,6 +59,7 @@ class BioSim:
         self.size = size
         self.survivors = []
         self.dead_agents = []
+        self.debug = [0,1]
 
     def reset(self):
         for i in range(self.n_agents):
@@ -70,26 +71,28 @@ class BioSim:
 
 
     def create_genetic_offsprings(self):
+
         # on selection les parents au hasard.
         # Peut être changé dans le futur pour correspondre
         # à la géographie, au fitness etc...
-
-        parent1 = random.choice(self.survivors)
-        parent2 = random.choice(self.survivors)
-
-
+        n = len(self.survivors)
+        chances = [i + 1 for i in range(n)]
+        sum_chances = sum(chances)
+        weights = [c / sum_chances for c in chances]
+        parent1 = np.random.choice(self.survivors,1, replace = False, p = weights)[0]
+        parent2 = np.random.choice(self.survivors,1,replace = False,  p= weights)[0]
         # On reprend la logique de bioSim4 pour faire une transmission similaire aux allèles. 
         # On fait en sorte que le génome soit celui de l'un des deux parents, et qu'une partie soit 
         # celle de l'autre parent. 
 
 
-        g1 = parent1.genome
-        g2 = parent2.genome
+        g1 = copy.deepcopy(parent1.genome)
+        g2 = copy.deepcopy(parent2.genome)
 
         if PARAMS["SEXUAL_REPRODUCTION"] is True :
 
             # On prend le génome le plus court des deux parents. Il fera office de génome de référence.
-            child_genome = g1 if len(g1) >= len(g2) else g2
+            child_genome = g1.copy() if len(g1) >= len(g2) else g2.copy()
             gShorter = g2 if len(g1) >= len(g2) else g1
 
             # Dans le génome le plus court, on prend un espace, défini aléatoirement,
@@ -110,7 +113,7 @@ class BioSim:
                 index0, index1 = index1, index0
 
             # Notre génome est remplacé dans l'espace entre les indexs
-            child_genome[index0:index1] = gShorter[index0:index1]
+            child_genome[index0:index1] = copy.deepcopy(gShorter[index0:index1])
 
             # Ici, on fait en sorte que le génome fasse la taille moyenne du génome des parents.
             # On ajoute 1 si la longueur des 2 génomes additionnés est impair.
@@ -147,7 +150,9 @@ class BioSim:
         for i in range(self.n_agents):
             agent = Agent(self.agents_map)
             agent.id = i
+
             agent.genome = self.create_genetic_offsprings()
+
             agent.brain = create_wiring_from_genome(agent.genome)
             agent.color = agent.make_genetic_color_value()
             self.agents.append(agent)
@@ -155,33 +160,36 @@ class BioSim:
     # fonction à appeller lors de la fin d'une simulation, et préparation de la prochaine,
     # similaire à Reset()
     def end_of_sim(self):
-
         self.timestep = 0
+        
 
+        self.survivors = []
+        
         PARAMS["SURVIVAL_CRITERIA"](self.size, self.agents)
+        
+        for agent in self.agents :
+            self.survivors.append(agent)
+            self.survivors.sort(key=lambda agent: agent.alive)
 
-        for agent in self.agents:
-            if not agent.alive :
-                self.dead_agents.append(agent)
-            else:
-                self.survivors.append(agent)
+        fitness_values = [agent.alive for agent in self.survivors]
 
-        stats = {"dead_agents" : len(self.dead_agents),
-                 "genetic_diversity" : genetic_diversity(self.agents)}
-
+        stats = {"fitness_median": np.median(fitness_values),
+                 "fitness_average" : np.average(fitness_values),
+                 "genetic_diversity": genetic_diversity(self.agents)}
+        
         self.agents_map = np.zeros((self.size, self.size), dtype=bool)
+        
 
         self.new_population()
 
-        self.dead_agents = []
-        self.survivors = []
-
         return stats
 
-    def step(self):
+    def step(self, i):
         # On fait bouger chaque agent selon l'action décidée par la fonction
         for agent in self.agents:
             agent.update_and_move(self.agents_map)
+        if i  in self.debug :
+            self.render_frame()
 
         self.timestep += 1
 
@@ -191,7 +199,7 @@ class BioSim:
             self.clock = pygame.time.Clock()
 
         # On crée une surface rempli de blanc
-        canvas = pygame.Surface((self.window_size, self.window_size))
+        canvas = pygame.Surface((512, 512))
         canvas.fill((255, 255, 255))
 
         # taille d'une case en pixels
