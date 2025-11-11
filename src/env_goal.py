@@ -188,8 +188,6 @@ class BioSim:
         # On fait bouger chaque agent selon l'action décidée par la fonction
         for agent in self.agents:
             agent.update_and_move(self.agents_map)
-        if i  in self.debug :
-            self.render_frame()
 
         self.timestep += 1
 

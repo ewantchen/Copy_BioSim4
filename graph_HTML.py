@@ -15,7 +15,7 @@ def load_generation_data(gen_number):
 
 # On crée notre graphe, en récupérant d'abord les données de nos agents et en les
 # stockants. Ensuite, on les transforme en graphe que l'on pourra ensuite afficher.
-def create_graph(gen_data, frame_index=1, agent_id=13):
+def create_graph(gen_data, frame_index=1, agent_id=746):
     frame = gen_data["frames"][frame_index]
     agents = frame["agents"]
     agent_data = agents[str(agent_id)]
@@ -112,4 +112,4 @@ def print_graph_html(gen_index):
     graph = create_graph(data)          # votre fonction existante
     save_html_graph(graph, "graph"+str(gen_index)+".html", with_arrows=True)
 
-print_graph_html(0)
+print_graph_html(50)

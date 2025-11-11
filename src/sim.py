@@ -7,10 +7,10 @@ from src.params import PARAMS
 # param_env1 = Params(size = 128, n_agents = 21, max_time= 100, render_mode = "human")
 # env1 = BioSim(param_env1)
 
-env = BioSim(size=PARAMS["SIZE"], n_agents=PARAMS["N_AGENTS"], max_time=PARAMS["MAX_TIME"],render_mode="human")
-
-#saved_generations = [0,1,2,50,100,500,1200]
+env = BioSim(size=PARAMS["SIZE"], n_agents=PARAMS["N_AGENTS"], max_time=PARAMS["MAX_TIME"],render_mode=None)
 saved_generations = []
+saved_generations = [0,1,2,50,100,500,1200]
+
 env.reset()
 for i in range(PARAMS["NUM_GENERATION"]+1):
     generation_state = [] # Contient toutes les informations de la gen

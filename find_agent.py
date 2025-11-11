@@ -1,15 +1,15 @@
 import json
 
-scale = 128 / 512
-x1, y1 =278 * scale ,250 * scale
-x2, y2 = 296 * scale,263 *scale
+scale = 1
+x1, y1 = 90,20
+x2, y2 = 90,90
 
 
 # Charger ton fichier JSON
-with open("src/generations/gen_0.json") as f:
+with open("src/generations/gen_50.json") as f:
     generation_state= json.load(f)
-frame_index = 0
-frame_state = generation_state[frame_index]
+frame_index = 291
+frame_state = generation_state["frames"][frame_index]
 
 for agent in frame_state["agents"]:
     pos_x, pos_y = frame_state["agents"][agent]["position"]

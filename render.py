@@ -76,7 +76,7 @@ def render(gen_number):
 
         # on récupère toute les données
         frame_state = generation_state["frames"][frame_index]
-        pygame.draw.line(canvas,(255,0,0), (14*pix_square_size,71*pix_square_size), (14*pix_square_size,0))
+
         for agent in frame_state["agents"] : 
             x, y = frame_state["agents"][agent]["position"]
             color = frame_state["agents"][agent]["color"]
@@ -116,29 +116,7 @@ def create_video(frames, output_file, fps = fps ) :
 [0,1,2,50,100,500,1200]
 frames = list(render(0))
 create_video(frames, "gen_0.mp4")
-frames = list(render(1))
-create_video(frames, "gen_1.mp4")
-frames = list(render(2))
-create_video(frames, "gen_2.mp4")
-frames = list(render(50))
-create_video(frames, "gen_50.mp4")
-frames = list(render(100))
-create_video(frames, "gen_100.mp4")
-frames = list(render(500))
-create_video(frames, "gen_500.mp4")
 frames = list(render(1200))
 create_video(frames, "gen_1200.mp4")
-
-
-
-
-
-
-
-    
-
-
-
-
 
 

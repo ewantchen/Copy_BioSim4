@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 
 # On récupère toutes les données de la génération.
 def load_generation_data(gen_number):
-    folder = os.path.join(os.path.dirname(__file__),"src", "generations")
+    folder = os.path.join(os.path.dirname(__file__),"src", "generations3")
     with open(os.path.join(folder, f"gen_{gen_number}.json"), "r") as f:
         return json.load(f)
 
@@ -56,7 +56,29 @@ def render_survival():
     plt.xlabel("generations")
     plt.show()
 
-    
+def render_median_fitness() :
+    data_median = []
+    for i in range(PARAMS["NUM_GENERATION"]) :
+        data = load_generation_data(i)
+        data_median.append(data["fitness_median"])
+        
+    plt.plot(data_median)
+    plt.ylabel("median")
+    plt.xlabel("generations")
+    plt.show()
+
+def render_average_fitness() :
+    data_median = []
+    for i in range(PARAMS["NUM_GENERATION"]) :
+        data = load_generation_data(i)
+        data_median.append(data["fitness_average"])
+        
+    plt.plot(data_median)
+    plt.ylabel("average")
+    plt.xlabel("generations")
+    plt.show()
+
+render_diversity()
 
     
 

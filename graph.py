@@ -1,45 +1,37 @@
-import igraph as ig 
-import json 
+import igraph as ig
+import json
 import os
 from src.params import *
 from src.gene import *
 from src.NeuralNet import *
 
-
-# On récupère toutes les données de la génération.
+# Chargement des données d'une génération
 def load_generation_data(gen_number):
-    folder = os.path.join(os.path.dirname(__file__),"src", "generations")
+    folder = os.path.join(os.path.dirname(__file__), "src", "generations")
     with open(os.path.join(folder, f"gen_{gen_number}.json"), "r") as f:
         return json.load(f)
 
-
-# On crée notre graphe, en récupérant d'abord les données de nos agents et en les 
-# stockants. Ensuite, on les transforme en graphe que l'on pourra ensuite afficher.
-def create_graph(gen_data, frame_index = 1, agent_id = 14):
+# Création du graphe igraph à partir du génome
+def create_graph(gen_data, frame_index=1, agent_id=746):
     frame = gen_data["frames"][frame_index]
     agents = frame["agents"]
     agent_data = agents[str(agent_id)]
 
-    # On récupère le génome brut (l'ADN)
+    # Récupération du génome brut
     raw_genome = hex_to_genome(agent_data["genome"])
-    
-    # On construit le cerveau fonctionnel à partir du génome
-    # Cette fonction va faire le modulo, l'élagage (culling) et le remappage.
-    functional_brain: NeuralNet = create_wiring_from_genome(raw_genome)
 
-    # On travaille maintenant avec les connexions du cerveau final, pas le génome brut
+    # Construction du cerveau fonctionnel
+    functional_brain: NeuralNet = create_wiring_from_genome(raw_genome)
     final_connections = functional_brain.connections
 
     edges = []
     vertices = set()
     weights = []
 
-    # On parcourt les connexions du cerveau ÉLAGUÉ et REMAPPÉ
+    # Parcours des connexions du cerveau
     for gene in final_connections:
-        # Les numéros sont maintenant petits et séquentiels (0, 1, 2...)
         source_key = ("N" if gene.sourceType == 0 else "S") + str(gene.sourceNum)
         target_key = ("N" if gene.targetType == 0 else "A") + str(gene.targetNum)
-
         vertices.add(source_key)
         vertices.add(target_key)
         edges.append((source_key, target_key))
@@ -48,28 +40,48 @@ def create_graph(gen_data, frame_index = 1, agent_id = 14):
     print(f"Génome brut: {len(raw_genome)} gènes. Cerveau fonctionnel: {len(final_connections)} connexions.")
     print(f"Noeuds du cerveau fonctionnel: {sorted(list(vertices))}")
 
-    # Le reste de votre code pour créer le graphe avec igraph reste identique...
     vertex_list = sorted(list(vertices))
     vertex_map = {v: i for i, v in enumerate(vertex_list)}
     mapped_edges = [(vertex_map[src], vertex_map[trgt]) for src, trgt in edges]
 
-    g = ig.Graph()
+    g = ig.Graph(directed=True)
     g.add_vertices(len(vertex_list))
     g.add_edges(mapped_edges)
-
-    # et le reste de la fonction pour assigner les noms, etc.
     g.vs["name"] = vertex_list
     g.es["weight"] = weights
-    g.vs["id"] = vertex_list # ou g.vs["label"] = vertex_list pour l'affichage
 
     return g
 
 
-# imprime le graphe sous forme de .png
-def print_graph() :
-    data = load_generation_data(100)
-    graph = create_graph(data)
-    layout = "fruchterman_reingold" # permet d'avoir le style du graphe.
-    ig.plot(graph, "graph.png", edge_curved=True, bbox=(400,400), margin=64, layout=layout, vertex_label=graph.vs["name"])
+# Sauvegarde du graphe en image PNG (avec couleurs)
+def save_png_graph(g, path="graph.png", layout_name="fruchterman_reingold"):
+    layout = g.layout(layout_name)
 
-print_graph()
+    # Définition des couleurs selon le type de nœud
+    color_map = {"S": "#C8FACC", "N": "#B8E0FC", "A": "#FFF9A6"}  # mêmes couleurs que Plotly
+    node_colors = [color_map.get(v["name"][0], "#B0BEC5") for v in g.vs]  # gris par défaut
+
+    visual_style = {
+        "layout": layout,
+        "vertex_color": node_colors,
+        "vertex_size": 20,
+        "vertex_label": g.vs["name"],
+        "vertex_label_size": 10,
+        "vertex_label_color": "black",
+        "edge_width": [1 for _ in g.es],
+        "edge_curved": 0.25,
+        "bbox": (200, 200),     
+        "margin": 20,           
+        "background": "white",
+    }
+    ig.plot(g, path, **visual_style)
+    print(f"Graphe sauvegardé dans {path}")
+
+
+# Exemple d'utilisation
+def print_graph_png(gen_index=50, frame_index=1, agent_id=288):
+    data = load_generation_data(gen_index)
+    graph = create_graph(data, frame_index, agent_id)
+    save_png_graph(graph, f"graph{gen_index}.png")
+
+print_graph_png(50)
