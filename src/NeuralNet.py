@@ -197,7 +197,7 @@ def create_wiring_from_genome(genome: List[Gene]) -> "NeuralNet":
     # Élaguer le réseau en supprimant les neurones inutiles en cascade
     cull_useless_neurons(node_map, net)
 
-    # Remapper les neurones restants avec des index séquentiels (0, 1, 2...)
+    # Remapper les neurones restants avec des index séquentiels
     neuron_remap = {old: new for new, old in enumerate(sorted(node_map.keys()))}
 
     for gene in net.connections:

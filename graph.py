@@ -58,7 +58,7 @@ def save_png_graph(g, path="graph.png", layout_name="fruchterman_reingold"):
     layout = g.layout(layout_name)
 
     # Définition des couleurs selon le type de nœud
-    color_map = {"S": "#C8FACC", "N": "#B8E0FC", "A": "#FFF9A6"}  # mêmes couleurs que Plotly
+    color_map = {"S": "#C8FACC", "N": "#B8E0FC", "A": "#FFF9A6"}  # mêmes couleurs 
     node_colors = [color_map.get(v["name"][0], "#B0BEC5") for v in g.vs]  # gris par défaut
 
     visual_style = {

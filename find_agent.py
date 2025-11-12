@@ -1,5 +1,6 @@
 import json
 
+#on estime la zone dans laquelle l'agent se trouve, et on peut le retrouver.
 scale = 1
 x1, y1 = 90,20
 x2, y2 = 90,90

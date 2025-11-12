@@ -19,7 +19,7 @@ class Gene :
         self.sourceNum: int = 0 # Index de la source (d'où vient l'input)
         self.targetType: int = 0 #0=NEURON, 1=ACTION
         self.targetNum: int = 0 #Index de la cible (où va l'output)
-        self.weight: int = 0 # Poids (int16)
+        self.weight: int = 0 # Poids 
 
     def weight_as_float(self, Gene) -> float : 
         #Converti le poids entier en float [-1.0 , 1.0]
@@ -30,15 +30,15 @@ class Gene :
 # mieux faire muter les poids. Quand on l'applique au feedforward on le met en float, dans 
 # une plage entre -4.0 et 4.0
 def make_random_weight() -> float :
-    #Poid aléatoire (comme dans BioSim4)
+    #Poid aléatoire
     return np.random.randint(-32768, 32767) # int16 signé
 
 
 def make_random_gene() -> "Gene" :
-    #crée un gène (comme dans BioSim4)
+    #crée un gène
     gene = Gene()
     gene.sourceType = np.random.randint(0,2) # 0=NEURON, 1=SENSOR
-    gene.sourceNum = np.random.randint(0, 0x7FFF) # 15 bits (comme BioSim)
+    gene.sourceNum = np.random.randint(0, 0x7FFF) # 15 bits
     gene.targetType = np.random.randint(0, 2) # 0=NEURON, 1=ACTION
     gene.targetNum = np.random.randint(0, 0x7FFF) # 15 bits
     gene.weight = make_random_weight()
@@ -96,7 +96,7 @@ def random_bit_flip(gene : "Gene") -> "Gene" :
 
 
 def apply_point_mutations(genome : List["Gene"], mutation_rate = 0.01) -> List["Gene"] :
-    #applique des mutations aléatoires (comme BioSim)
+    #applique des mutations aléatoires
     for gene in genome : 
         if np.random.rand() < mutation_rate : 
             random_bit_flip(gene)

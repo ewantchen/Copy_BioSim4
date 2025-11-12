@@ -102,7 +102,7 @@ class BioSim:
             #index0 = 2
             #index1 = 5
             #On prend dans gShorter la tranche de l'indice 2 (inclus) à 5 
-            # exclu) → éléments 2, 3, 4 → [B, B, B]
+            # exclu) => éléments 2, 3, 4 => [B, B, B]
             #On copie cette tranche dans genome à partir de l'indice 2
             #Après la copie, genome devient :
             #[A, A, B, B, B, A, A, A, A, A]
